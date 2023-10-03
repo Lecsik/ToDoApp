@@ -1,0 +1,47 @@
+package ru.startandroid.todoapp.presentation.main
+
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
+import ru.startandroid.todoapp.data.TodoItemsRepository
+import ru.startandroid.todoapp.models.TodoItem
+
+
+class MainViewModel : ViewModel() {
+
+    private val repository = TodoItemsRepository.INSTANCE
+
+    private val isCompletedTasksVisiblePrivate = MutableLiveData(false)
+    val isCompletedTasksVisible: LiveData<Boolean> get() = isCompletedTasksVisiblePrivate
+
+    fun switchCompletedTasksVisibility() {
+        isCompletedTasksVisiblePrivate.value = isCompletedTasksVisiblePrivate.value!!.not()
+    }
+
+    private val itemsPrivate = MediatorLiveData<List<TodoItem>>().apply {
+        addSource(repository.itemsLiveData) { items ->
+            value =
+                if (isCompletedTasksVisible.value == true) items
+                else items.filter { it.isCompleted.not() }
+        }
+        addSource(isCompletedTasksVisible) { isCompletedTasksVisible ->
+            val items = repository.itemsLiveData.value!!
+            value =
+                if (isCompletedTasksVisible == true) items
+                else items.filter { it.isCompleted.not() }
+        }
+    }
+    val items: LiveData<List<TodoItem>> get() = itemsPrivate
+
+    val count: LiveData<Int> = repository.itemsLiveData.map { it.count { it.isCompleted } }
+
+    fun removeItem(position: Int) {
+        repository.removeItem(items.value!![position].id)
+    }
+
+    fun setCompleted(position: Int, isCompleted: Boolean) {
+        repository.setCompleted(items.value!![position].id, isCompleted)
+    }
+}

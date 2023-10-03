@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">ToDoApp</string>
+    <string name="large_title">Мои дела</string>
+    <string name="executed_title">Выполнено – %1$d</string>
+    <string name="visibility_button">Visibility</string>
+    <string name="property_info_button">Info</string>
+    <string name="text_of_item">Text</string>
+    <string name="button_add">Добавить новое задание</string>
+    <string name="left_swipe">Item done</string>
+    <string name="right_swipe">Delete</string>
+    <string name="close_button">Close</string>
+    <string name="save_button">Сохранить</string>
+    <string name="description_text">Что надо сделать…</string>
+    <string name="importance_label"><font size="42">Важность</font></string>
+    <string name="importance_text">Нет</string>
+    <string name="deadline_label">Сделать до</string>
+    <string name="delete_label">Удалить</string>
+    <string name="delete_item_picture">Delete item</string>
+    <string-array name="priorityListItems">
+        <item>Нет</item>
+        <item>Низкий</item>
+        <item>!!Высокий</item>
+    </string-array>
+</resources>
