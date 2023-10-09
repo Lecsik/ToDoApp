@@ -19,10 +19,6 @@ class TodoListAdapter : RecyclerView.Adapter<TodoListAdapter.ItemListViewHolder>
             notifyDataSetChanged()
         }
 
-    override fun getItemId(position: Int): Long {
-        return position.toLong()
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemListViewHolder {
         val lInflater = LayoutInflater.from(parent.context)
         val holder = ItemListViewHolder(

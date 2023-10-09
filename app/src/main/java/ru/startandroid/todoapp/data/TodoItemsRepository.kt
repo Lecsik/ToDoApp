@@ -16,7 +16,7 @@ class TodoItemsRepository {
     private lateinit var storage: TodoItemsStorage
 
     fun init(context: Context) {
-        storage = TodoItemsStorage(context)
+        storage = TodoItemsStorage(DBHelper(context).writableDatabase)
         itemsMutableLiveData.value = storage.getItems()
     }
 
@@ -35,7 +35,6 @@ class TodoItemsRepository {
 
     fun removeItem(id: String) {
         val items = itemsLiveData.value!!.filter { it.id != id }
-        // items.removeAll { it.id == id }
         itemsMutableLiveData.value = items
         storage.setItems(items)
     }
