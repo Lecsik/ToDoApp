@@ -24,19 +24,15 @@ class TodoItemsRepository {
     val itemsLiveData: LiveData<List<TodoItem>> get() = itemsMutableLiveData
 
     fun addItem(item: TodoItem) {
-        val items = itemsLiveData.value!!.toMutableList()
-        val existingIndex = items.indexOfFirst { it.id == item.id }
-        if (existingIndex == -1) items.add(item)
-        else items[existingIndex] = item
-
-        itemsMutableLiveData.value = items
-        storage.setItems(items)
+        val existingIndex = itemsLiveData.value!!.indexOfFirst { it.id == item.id }
+        if (existingIndex == -1) storage.addItem(item)
+        else storage.updateItem(item)
+        itemsMutableLiveData.value = storage.getItems()
     }
 
     fun removeItem(id: String) {
-        val items = itemsLiveData.value!!.filter { it.id != id }
-        itemsMutableLiveData.value = items
-        storage.setItems(items)
+        storage.removeItem(id)
+        itemsMutableLiveData.value = storage.getItems()
     }
 
     fun setCompleted(id: String, isCompleted: Boolean) {

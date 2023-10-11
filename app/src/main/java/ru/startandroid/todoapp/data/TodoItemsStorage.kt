@@ -2,29 +2,40 @@ package ru.startandroid.todoapp.data
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
-import android.util.Log
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.models.TodoItem
 
 
 class TodoItemsStorage(private val database: SQLiteDatabase) {
 
-    fun setItems(items: List<TodoItem>) {
-        val delCount = database.delete("todoItems", null, null)
-        Log.d("loggg", "deleted rows count = $delCount")
-        items.forEach {
-            val cv = ContentValues().apply {
-                put("id", it.id)
-                put("description", it.description)
-                put("priority", it.priority.ordinal)
-                put("isCompleted", if (it.isCompleted) 1 else 0)
-                put("createdDate", it.createdDate.toString())
-                put("dueDate", it.dueDate?.toString())
-                put("changedDate", it.changedDate?.toString())
-            }
-            val rowID = database.insert("todoItems", null, cv)
-            Log.d("loggg", "row inserted, ID = $rowID")
+    fun addItem(item: TodoItem) {
+        val cv = ContentValues().apply {
+            put("id", item.id)
+            put("description", item.description)
+            put("priority", item.priority.ordinal)
+            put("isCompleted", if (item.isCompleted) 1 else 0)
+            put("createdDate", item.createdDate.toString())
+            put("dueDate", item.dueDate?.toString())
+            put("changedDate", item.changedDate?.toString())
         }
+        database.insert("todoItems", null, cv)
+    }
+
+    fun removeItem(id: String) {
+        database.delete("todoItems", "id = ?", arrayOf(id))
+    }
+
+    fun updateItem(item: TodoItem) {
+        val cv = ContentValues().apply {
+            put("id", item.id)
+            put("description", item.description)
+            put("priority", item.priority.ordinal)
+            put("isCompleted", if (item.isCompleted) 1 else 0)
+            put("createdDate", item.createdDate.toString())
+            put("dueDate", item.dueDate?.toString())
+            put("changedDate", item.changedDate?.toString())
+        }
+        database.update("todoItems", cv, "id = ?", arrayOf(item.id))
     }
 
     fun getItems(): List<TodoItem> {
@@ -38,7 +49,6 @@ class TodoItemsStorage(private val database: SQLiteDatabase) {
                 val createdDateColIndex = cursor.getColumnIndex("createdDate")
                 val dueDateColIndex = cursor.getColumnIndex("dueDate")
                 val changedDateColIndex = cursor.getColumnIndex("changedDate")
-
                 do {
                     resultList.add(TodoItem(
                         cursor.getString(idColIndex),
@@ -50,7 +60,7 @@ class TodoItemsStorage(private val database: SQLiteDatabase) {
                         cursor.getString(changedDateColIndex)?.let { LocalDate(it) }
                     ))
                 } while (cursor.moveToNext())
-            } else Log.d("loggg", "0 rows")
+            }
             resultList
         }
     }

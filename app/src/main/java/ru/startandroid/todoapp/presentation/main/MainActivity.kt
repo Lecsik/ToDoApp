@@ -1,6 +1,5 @@
 package ru.startandroid.todoapp.presentation.main
 
-//import android.widget.SimpleAdapter
 import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.drawable.ColorDrawable
@@ -23,7 +22,7 @@ import ru.startandroid.todoapp.presentation.task.TaskActivity
 class MainActivity : AppCompatActivity() {
 
 
-    private val toDoListAdapter = TodoListAdapter()//.apply { items = this@MainActivity.items }
+    private val toDoListAdapter = TodoListAdapter()
     private lateinit var executeTitle: TextView
 
     private val viewModel by lazy { ViewModelProvider(this).get<MainViewModel>() }
@@ -38,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         lvMain.adapter = toDoListAdapter
         lvMain.layoutManager = layoutManager
 
-        executeTitle = findViewById<TextView>(R.id.executed_title)
+        executeTitle = findViewById(R.id.executed_title)
         //Toolbar visibility button
         val visibilityButton = findViewById<ImageButton>(R.id.visibilityButton)
         visibilityButton.setOnClickListener { viewModel.switchCompletedTasksVisibility() }

@@ -24,7 +24,6 @@ class TodoListAdapter : RecyclerView.Adapter<TodoListAdapter.ItemListViewHolder>
         val holder = ItemListViewHolder(
             lInflater.inflate(R.layout.check_box_list_item, parent, false)
         )
-        //val item = ////Error starts here "Cannot call this method while RecyclerView is computing a layout or scrolling"
         holder.itemView.setOnClickListener {
             onClickListener?.onClick(
                 holder.bindingAdapterPosition,
@@ -49,12 +48,10 @@ class TodoListAdapter : RecyclerView.Adapter<TodoListAdapter.ItemListViewHolder>
         return items.size
     }
 
-    // A function to bind the onclickListener.
     fun setOnClickListener(onClickListener: OnClickListener) {
         this.onClickListener = onClickListener
     }
 
-    // onClickListener Interface
     interface OnClickListener {
         fun onClick(position: Int, model: TodoItem)
         fun onCheckChanged(position: Int, model: TodoItem, isChecked: Boolean)
