@@ -3,6 +3,7 @@ package ru.startandroid.todoapp.data
 import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.room.Room
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.models.TodoItem
 
@@ -16,7 +17,13 @@ class TodoItemsRepository {
     private lateinit var storage: TodoItemsStorage
 
     fun init(context: Context) {
-        storage = TodoItemsStorage(DBHelper(context).writableDatabase)
+        storage = TodoItemsStorage(
+            Room.databaseBuilder(
+                context,
+                TodoItemDatabase::class.java,
+                "database.db"
+            ).allowMainThreadQueries().build()
+        )
         itemsMutableLiveData.value = storage.getItems()
     }
 

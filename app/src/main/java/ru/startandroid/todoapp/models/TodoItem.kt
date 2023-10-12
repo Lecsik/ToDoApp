@@ -2,8 +2,12 @@ package ru.startandroid.todoapp.models
 
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.room.Entity
 import org.joda.time.LocalDate
 
+@Entity(
+    primaryKeys = ["id"]
+)
 data class TodoItem(
     val id: String,
     val description: String,
@@ -30,13 +34,7 @@ data class TodoItem(
         parcel.readString()?.let { LocalDate.parse(it) }
     )
 
-    override fun describeContents(): Int {
-        //  val string = Priority.NONE.toString()
-        //  val enum = Priority.valueOf(string)
-        //  val int = Priority.NONE.ordinal
-        //  Priority.values()[int]
-        return 0
-    }
+    override fun describeContents() = 0
 
     override fun writeToParcel(dest: Parcel, flags: Int) = with(dest) {
         writeString(id)
