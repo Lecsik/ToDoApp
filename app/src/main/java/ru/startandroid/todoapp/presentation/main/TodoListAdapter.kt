@@ -30,6 +30,14 @@ class TodoListAdapter : RecyclerView.Adapter<TodoListAdapter.ItemListViewHolder>
                 items[holder.bindingAdapterPosition]
             )
         }
+        return holder
+    }
+
+    override fun onBindViewHolder(holder: ItemListViewHolder, position: Int) {
+        val todoItem = items[position]
+
+        holder.itemCheckBox.setOnCheckedChangeListener(null)
+        holder.itemCheckBox.isChecked = todoItem.isCompleted
         holder.itemCheckBox.setOnCheckedChangeListener { _, isChecked ->
             onClickListener?.onCheckChanged(
                 holder.bindingAdapterPosition,
@@ -37,11 +45,7 @@ class TodoListAdapter : RecyclerView.Adapter<TodoListAdapter.ItemListViewHolder>
                 isChecked
             )
         }
-        return holder
-    }
-
-    override fun onBindViewHolder(holder: ItemListViewHolder, position: Int) {
-        holder.onBind(items[position])
+        holder.itemTextView.text = todoItem.description
     }
 
     override fun getItemCount(): Int {
@@ -58,13 +62,7 @@ class TodoListAdapter : RecyclerView.Adapter<TodoListAdapter.ItemListViewHolder>
     }
 
     class ItemListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-
         val itemCheckBox: CheckBox = itemView.findViewById(R.id.checkBox)
-        private val itemTextView: TextView = itemView.findViewById(R.id.item_text)
-
-        fun onBind(todoItem: TodoItem) {
-            itemCheckBox.isChecked = todoItem.isCompleted
-            itemTextView.text = todoItem.description
-        }
+        val itemTextView: TextView = itemView.findViewById(R.id.item_text)
     }
 }

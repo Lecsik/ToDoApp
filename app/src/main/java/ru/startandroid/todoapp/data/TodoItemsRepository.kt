@@ -2,7 +2,6 @@ package ru.startandroid.todoapp.data
 
 import android.content.Context
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.room.Room
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.models.TodoItem
@@ -24,22 +23,18 @@ class TodoItemsRepository {
                 "database.db"
             ).allowMainThreadQueries().build()
         )
-        itemsMutableLiveData.value = storage.getItems()
     }
 
-    private val itemsMutableLiveData = MutableLiveData<List<TodoItem>>(emptyList())
-    val itemsLiveData: LiveData<List<TodoItem>> get() = itemsMutableLiveData
+    val itemsLiveData: LiveData<List<TodoItem>> by lazy { storage.getItems() }
 
     fun addItem(item: TodoItem) {
         val existingIndex = itemsLiveData.value!!.indexOfFirst { it.id == item.id }
         if (existingIndex == -1) storage.addItem(item)
         else storage.updateItem(item)
-        itemsMutableLiveData.value = storage.getItems()
     }
 
     fun removeItem(id: String) {
         storage.removeItem(id)
-        itemsMutableLiveData.value = storage.getItems()
     }
 
     fun setCompleted(id: String, isCompleted: Boolean) {

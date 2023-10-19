@@ -1,5 +1,6 @@
 package ru.startandroid.todoapp.data
 
+import androidx.lifecycle.LiveData
 import ru.startandroid.todoapp.models.TodoItem
 
 
@@ -17,7 +18,7 @@ class TodoItemsStorage(private val database: TodoItemDatabase) {
         database.todoItemDao.update(item)
     }
 
-    fun getItems(): List<TodoItem> {
+    fun getItems(): LiveData<List<TodoItem>> {
         return database.todoItemDao.getAllTasks()
     }
 }

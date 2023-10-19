@@ -27,7 +27,7 @@ class MainViewModel : ViewModel() {
                 else items.filter { it.isCompleted.not() }
         }
         addSource(isCompletedTasksVisible) { isCompletedTasksVisible ->
-            val items = repository.itemsLiveData.value!!
+            val items = repository.itemsLiveData.value ?: return@addSource
             value =
                 if (isCompletedTasksVisible == true) items
                 else items.filter { it.isCompleted.not() }

@@ -1,9 +1,9 @@
 package ru.startandroid.todoapp.data
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-
 import androidx.room.Update
 import ru.startandroid.todoapp.models.TodoItem
 
@@ -20,5 +20,5 @@ interface TodoItemDao {
     fun delete(id: String)
 
     @Query("SELECT * FROM TodoItem")
-    fun getAllTasks(): List<TodoItem>
+    fun getAllTasks(): LiveData<List<TodoItem>>
 }
