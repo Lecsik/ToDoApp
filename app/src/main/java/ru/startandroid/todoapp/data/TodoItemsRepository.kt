@@ -13,32 +13,28 @@ class TodoItemsRepository {
         val INSTANCE = TodoItemsRepository()
     }
 
-    private lateinit var storage: TodoItemsStorage
+    private lateinit var database: TodoItemDatabase
 
     fun init(context: Context) {
-        storage = TodoItemsStorage(
-            Room.databaseBuilder(
-                context,
-                TodoItemDatabase::class.java,
-                "database.db"
-            ).allowMainThreadQueries().build()
-        )
+        database = Room.databaseBuilder(
+            context,
+            TodoItemDatabase::class.java,
+            "database.db"
+        ).allowMainThreadQueries().build()
     }
 
-    val itemsLiveData: LiveData<List<TodoItem>> by lazy { storage.getItems() }
+    val itemsLiveData: LiveData<List<TodoItem>> by lazy { database.todoItemDao.getAllTasks() }
 
     fun addItem(item: TodoItem) {
-        val existingIndex = itemsLiveData.value!!.indexOfFirst { it.id == item.id }
-        if (existingIndex == -1) storage.addItem(item)
-        else storage.updateItem(item)
+        database.todoItemDao.upsert(item)
     }
 
     fun removeItem(id: String) {
-        storage.removeItem(id)
+        database.todoItemDao.delete(id)
     }
 
     fun setCompleted(id: String, isCompleted: Boolean) {
-        val item = itemsLiveData.value!!.first { it.id == id }
+        val item = database.todoItemDao.getTask(id)
         addItem(item.copy(isCompleted = isCompleted, changedDate = LocalDate.now()))
     }
 }
