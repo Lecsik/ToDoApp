@@ -1,8 +1,10 @@
 package ru.startandroid.todoapp.presentation.main
 
+import android.app.ProgressDialog
 import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.drawable.ColorDrawable
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
@@ -155,7 +157,6 @@ class MainActivity : AppCompatActivity() {
 
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
                 val position = viewHolder.bindingAdapterPosition
-                //delete item here
                 if (direction == ItemTouchHelper.LEFT) {
                     viewModel.removeItem(position)
                 } else {
@@ -171,7 +172,7 @@ class MainActivity : AppCompatActivity() {
         val fab: View = findViewById(R.id.floatingActionButton)
         fab.setOnClickListener {
             val intent = Intent(this@MainActivity, TaskActivity::class.java)
-            startActivity(intent)
+            startActivityForResult(intent, 1)
         }
 
         toDoListAdapter.setOnClickListener(object :
@@ -179,7 +180,7 @@ class MainActivity : AppCompatActivity() {
             override fun onClick(position: Int, model: TodoItem) {
                 val intent = Intent(this@MainActivity, TaskActivity::class.java)
                 intent.putExtra("item", model)
-                startActivity(intent)
+                startActivityForResult(intent, 1)
             }
 
             override fun onCheckChanged(position: Int, model: TodoItem, isChecked: Boolean) {
@@ -187,6 +188,35 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        //progressBar
+        val progressBarDialog = ProgressDialog(this@MainActivity).apply {
+            setCancelable(false)
+        }
+        viewModel.operation.observe(this@MainActivity) {
+            if (it == MainViewModel.Operation.LOADING) {
+                progressBarDialog.show()
+            } else {
+                progressBarDialog.dismiss()
+            }
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (resultCode == RESULT_OK) {
+            if (data != null && data.hasExtra("deleteItem")) {
+                toDoListAdapter.items =
+                    toDoListAdapter.items.filter { it.id != data.getStringExtra("deleteItem") }
+            }
+            if (data != null && data.hasExtra("newItem")) {
+                val item: TodoItem =
+                    if (Build.VERSION.SDK_INT >= 33) {
+                        data.getParcelableExtra("newItem", TodoItem::class.java)!!
+                    } else data.getParcelableExtra("newItem")!!
+
+                toDoListAdapter.items += item
+            }
+        }
     }
 }
-
