@@ -9,6 +9,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
@@ -168,11 +170,30 @@ class MainActivity : AppCompatActivity() {
         )
         itemTouchHelper.attachToRecyclerView(lvMain)
 
-        //FloatingActionBar - go to TaskScreen
+        //go to TaskScreen
+        val launcher: ActivityResultLauncher<Intent> = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            if (result.resultCode == RESULT_OK) {
+                if (result.data != null && result.data!!.hasExtra("deleteItem")) {
+                    toDoListAdapter.items =
+                        toDoListAdapter.items.filter { it.id != result.data!!.getStringExtra("deleteItem") }
+                }
+                if (result.data != null && result.data!!.hasExtra("newItem")) {
+                    val item: TodoItem =
+                        if (Build.VERSION.SDK_INT >= 33) {
+                            result.data!!.getParcelableExtra("newItem", TodoItem::class.java)!!
+                        } else result.data!!.getParcelableExtra("newItem")!!
+
+                    toDoListAdapter.items += item
+                }
+            }
+        }
+
         val fab: View = findViewById(R.id.floatingActionButton)
         fab.setOnClickListener {
             val intent = Intent(this@MainActivity, TaskActivity::class.java)
-            startActivityForResult(intent, 1)
+            launcher.launch(intent)
         }
 
         toDoListAdapter.setOnClickListener(object :
@@ -180,7 +201,7 @@ class MainActivity : AppCompatActivity() {
             override fun onClick(position: Int, model: TodoItem) {
                 val intent = Intent(this@MainActivity, TaskActivity::class.java)
                 intent.putExtra("item", model)
-                startActivityForResult(intent, 1)
+                launcher.launch(intent)
             }
 
             override fun onCheckChanged(position: Int, model: TodoItem, isChecked: Boolean) {
@@ -197,25 +218,6 @@ class MainActivity : AppCompatActivity() {
                 progressBarDialog.show()
             } else {
                 progressBarDialog.dismiss()
-            }
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (resultCode == RESULT_OK) {
-            if (data != null && data.hasExtra("deleteItem")) {
-                toDoListAdapter.items =
-                    toDoListAdapter.items.filter { it.id != data.getStringExtra("deleteItem") }
-            }
-            if (data != null && data.hasExtra("newItem")) {
-                val item: TodoItem =
-                    if (Build.VERSION.SDK_INT >= 33) {
-                        data.getParcelableExtra("newItem", TodoItem::class.java)!!
-                    } else data.getParcelableExtra("newItem")!!
-
-                toDoListAdapter.items += item
             }
         }
     }
