@@ -4,8 +4,6 @@ import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
-import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Single
 import ru.startandroid.todoapp.models.TodoItem
 
 
@@ -13,14 +11,14 @@ import ru.startandroid.todoapp.models.TodoItem
 interface TodoItemDao {
 
     @Query("DELETE FROM TodoItem WHERE id = :id")
-    fun delete(id: String): Completable
+    suspend fun delete(id: String)
 
     @Upsert
-    fun upsert(todoItem: TodoItem): Completable
+    suspend fun upsert(todoItem: TodoItem)
 
     @Query("SELECT * FROM TodoItem")
     fun getAllTasks(): LiveData<List<TodoItem>>
 
     @Query("SELECT * FROM TodoItem WHERE id = :id")
-    fun getTask(id: String): Single<TodoItem>
+    suspend fun getTask(id: String): TodoItem
 }

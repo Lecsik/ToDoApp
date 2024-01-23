@@ -3,9 +3,8 @@ package ru.startandroid.todoapp.presentation.task
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.data.TodoItemsRepository
 import ru.startandroid.todoapp.models.TodoItem
@@ -39,7 +38,6 @@ class TaskViewModel : ViewModel() {
     private val donePrivate = MutableLiveData(false)
     val done: LiveData<Boolean> get() = donePrivate
 
-    private val compositeDisposable = CompositeDisposable()
 
     enum class Operation {
         LOADING
@@ -49,13 +47,11 @@ class TaskViewModel : ViewModel() {
         operationPrivate.value = Operation.LOADING
         val existingItem = existingItem
         check(existingItem != null) { "No existing item" }
-        repository.removeItem(existingItem.id)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                operationPrivate.value = null
-                donePrivate.value = true
-            }.let(compositeDisposable::add)
+        viewModelScope.launch {
+            repository.removeItem(existingItem.id)
+            operationPrivate.value = null
+            donePrivate.value = true
+        }
         return existingItem.id
     }
 
@@ -75,17 +71,12 @@ class TaskViewModel : ViewModel() {
             dueDate.value,
             null
         )
-        repository.addItem(todoItem)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                operationPrivate.value = null
-                donePrivate.value = true
-            }.let(compositeDisposable::add)
+        viewModelScope.launch {
+            repository.addItem(todoItem)
+            operationPrivate.value = null
+            donePrivate.value = true
+        }
         return todoItem
     }
 
-    override fun onCleared() {
-        compositeDisposable.dispose()
-    }
 }

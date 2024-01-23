@@ -5,8 +5,8 @@ import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import ru.startandroid.todoapp.data.TodoItemsRepository
 import ru.startandroid.todoapp.models.TodoItem
 
@@ -47,25 +47,19 @@ class MainViewModel : ViewModel() {
 
     val count: LiveData<Int> = repository.itemsLiveData.map { it.count { it.isCompleted } }
 
-    private val compositeDisposable = CompositeDisposable()
 
     fun removeItem(position: Int) {
         operationPrivate.value = Operation.LOADING
-        repository.removeItem(items.value!![position].id)
-            .subscribeOn(Schedulers.io())
-            .subscribe()
-            .let(compositeDisposable::add)
+        viewModelScope.launch {
+            repository.removeItem(items.value!![position].id)
+        }
     }
 
     fun setCompleted(position: Int, isCompleted: Boolean) {
         operationPrivate.value = Operation.LOADING
-        repository.setCompleted(items.value!![position].id, isCompleted)
-            .subscribeOn(Schedulers.io())
-            .subscribe()
-            .let(compositeDisposable::add)
+        viewModelScope.launch {
+            repository.setCompleted(items.value!![position].id, isCompleted)
+        }
     }
 
-    override fun onCleared() {
-        compositeDisposable.dispose()
-    }
 }
