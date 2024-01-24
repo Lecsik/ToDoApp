@@ -1,6 +1,8 @@
 package ru.startandroid.todoapp.presentation.task
 
 import android.app.DatePickerDialog
+import android.app.ProgressDialog
+import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
@@ -24,12 +26,13 @@ import com.google.android.material.textfield.TextInputEditText
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.models.TodoItem
+import ru.startandroid.todoapp.presentation.main.MainActivity
 import java.util.Calendar
-
 
 class TaskActivity : AppCompatActivity() {
 
     private val viewModel by lazy { ViewModelProvider(this).get<TaskViewModel>() }
+    private var resultIntent: Intent? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -143,12 +146,28 @@ class TaskActivity : AppCompatActivity() {
             }
 
             setOnClickListener {
-                viewModel.removeItem()
-                finish()
+                resultIntent = Intent(this@TaskActivity, MainActivity::class.java).apply {
+                    putExtra("deleteItem", viewModel.remove())
+                }
             }
         }
 
+        //progressBar
+        val progressBarDialog = ProgressDialog(this@TaskActivity).apply {
+            setCancelable(false)
+        }
+        viewModel.operation.observe(this) {
+            if (it == TaskViewModel.Operation.LOADING) {
+                progressBarDialog.show()
+            } else progressBarDialog.dismiss()
+        }
 
+        viewModel.done.observe(this@TaskActivity) {
+            if (it == true) {
+                setResult(RESULT_OK, resultIntent)
+                finish()
+            }
+        }
     }
 
     private fun getExistedItem(): TodoItem? {
@@ -167,8 +186,9 @@ class TaskActivity : AppCompatActivity() {
         return when (item.itemId) {
             R.id.save_text_button -> {
                 viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
-                    viewModel.newItem()
-                    finish()
+                    resultIntent = Intent(this@TaskActivity, MainActivity::class.java).apply {
+                        putExtra("newItem", viewModel.save())
+                    }
                 }
                 return true
             }
@@ -176,5 +196,4 @@ class TaskActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
-
 }

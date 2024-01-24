@@ -20,20 +20,16 @@ class TodoItemsRepository {
             context,
             TodoItemDatabase::class.java,
             "database.db"
-        ).allowMainThreadQueries().build()
+        ).build()
     }
 
     val itemsLiveData: LiveData<List<TodoItem>> by lazy { database.todoItemDao.getAllTasks() }
 
-    fun addItem(item: TodoItem) {
-        database.todoItemDao.upsert(item)
-    }
+    suspend fun addItem(item: TodoItem) = database.todoItemDao.upsert(item)
 
-    fun removeItem(id: String) {
-        database.todoItemDao.delete(id)
-    }
+    suspend fun removeItem(id: String) = database.todoItemDao.delete(id)
 
-    fun setCompleted(id: String, isCompleted: Boolean) {
+    suspend fun setCompleted(id: String, isCompleted: Boolean) {
         val item = database.todoItemDao.getTask(id)
         addItem(item.copy(isCompleted = isCompleted, changedDate = LocalDate.now()))
     }

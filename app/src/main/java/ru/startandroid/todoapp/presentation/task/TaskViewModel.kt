@@ -3,6 +3,8 @@ package ru.startandroid.todoapp.presentation.task
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.data.TodoItemsRepository
 import ru.startandroid.todoapp.models.TodoItem
@@ -29,33 +31,52 @@ class TaskViewModel : ViewModel() {
 
     val priority: MutableLiveData<TodoItem.Priority> = MutableLiveData(TodoItem.Priority.NONE)
 
-    fun removeItem() {
-        val existingItem = existingItem
-        check(existingItem != null) { "No existing item" }
-        repository.removeItem(existingItem.id)
+
+    private val operationPrivate = MutableLiveData<Operation?>(null)
+    val operation: LiveData<Operation?> get() = operationPrivate
+
+    private val donePrivate = MutableLiveData(false)
+    val done: LiveData<Boolean> get() = donePrivate
+
+
+    enum class Operation {
+        LOADING
     }
 
-    fun newItem() {
-        existingItem?.let { item ->
-            repository.addItem(
-                item.copy(
-                    dueDate = dueDate.value,
-                    description = description.value!!,
-                    priority = priority.value!!,
-                    changedDate = LocalDate.now()
-                )
-            )
-        } ?: run {
-            val todoItem = TodoItem(
-                UUID.randomUUID().toString(),
-                description.value!!,
-                priority.value!!,
-                false,
-                LocalDate.now(),
-                dueDate.value,
-                null
-            )
-            repository.addItem(todoItem)
+    fun remove(): String {
+        operationPrivate.value = Operation.LOADING
+        val existingItem = existingItem
+        check(existingItem != null) { "No existing item" }
+        viewModelScope.launch {
+            repository.removeItem(existingItem.id)
+            operationPrivate.value = null
+            donePrivate.value = true
         }
+        return existingItem.id
     }
+
+    fun save(): TodoItem {
+        operationPrivate.value = Operation.LOADING
+        val todoItem = existingItem?.copy(
+            dueDate = dueDate.value,
+            description = description.value!!,
+            priority = priority.value!!,
+            changedDate = LocalDate.now()
+        ) ?: TodoItem(
+            UUID.randomUUID().toString(),
+            description.value!!,
+            priority.value!!,
+            false,
+            LocalDate.now(),
+            dueDate.value,
+            null
+        )
+        viewModelScope.launch {
+            repository.addItem(todoItem)
+            operationPrivate.value = null
+            donePrivate.value = true
+        }
+        return todoItem
+    }
+
 }
