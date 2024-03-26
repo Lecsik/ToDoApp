@@ -9,8 +9,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -21,54 +19,50 @@ import androidx.lifecycle.get
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import ru.startandroid.todoapp.R
+import ru.startandroid.todoapp.databinding.FragmentMainBinding
 import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.presentation.task.TaskActivity
 
 class MainFragment : Fragment(R.layout.fragment_main) {
-
-    private val toDoListAdapter = TodoListAdapter()
-    private lateinit var executeTitle: TextView
 
     private val viewModel by lazy { ViewModelProvider(this).get<MainViewModel>() }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_main, container, false)
-        val lvMain = view.findViewById<RecyclerView>(R.id.items_list)
-        val layoutManager = LinearLayoutManager(view.context, LinearLayoutManager.VERTICAL, false)
+    ): View {
+        val binding: FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
 
-        lvMain.adapter = toDoListAdapter
-        lvMain.layoutManager = layoutManager
+        val toDoListAdapter = TodoListAdapter()
+        binding.itemsList.adapter = toDoListAdapter
+        binding.itemsList.layoutManager = LinearLayoutManager(
+            binding.root.context, LinearLayoutManager.VERTICAL, false
+        )
 
-        executeTitle = view.findViewById(R.id.executed_title)
         //Toolbar visibility button
-        val visibilityButton = view.findViewById<ImageButton>(R.id.visibilityButton)
-        visibilityButton.setOnClickListener { viewModel.switchCompletedTasksVisibility() }
+        binding.visibilityButton.setOnClickListener { viewModel.switchCompletedTasksVisibility() }
         viewModel.isCompletedTasksVisible.observe(viewLifecycleOwner) { isCompletedTasksVisible ->
-            visibilityButton.setImageResource(
+            binding.visibilityButton.setImageResource(
                 if (isCompletedTasksVisible) R.drawable.visibility_off
                 else R.drawable.visibility
             )
         }
 
         viewModel.items.observe(viewLifecycleOwner) {
-            lvMain.post { toDoListAdapter.items = it }
+            binding.itemsList.post { toDoListAdapter.items = it }
         }
 
         viewModel.count.observe(viewLifecycleOwner) {
-            executeTitle.text = getString(R.string.executed_title, it)
+            binding.executedTitle.text = getString(R.string.executed_title, it)
         }
 
         //On swipe
         val background = ColorDrawable()
         val swipeRightIcon =
-            ContextCompat.getDrawable(view.context, R.drawable.property_1_delete)!!
+            ContextCompat.getDrawable(binding.root.context, R.drawable.property_1_delete)!!
         val swipeLeftIcon =
-            ContextCompat.getDrawable(view.context, R.drawable.property_1_check)!!
+            ContextCompat.getDrawable(binding.root.context, R.drawable.property_1_check)!!
         val intrinsicHeightRight = swipeRightIcon.intrinsicHeight
         val intrinsicWidthRight = swipeRightIcon.intrinsicWidth
         val intrinsicHeightLeft = swipeLeftIcon.intrinsicHeight
@@ -110,7 +104,8 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                     val itemHeight = itemView.bottom - itemView.top
 
                     if (dX < 0) {
-                        background.color = ContextCompat.getColor(view.context, R.color.color_red)
+                        background.color =
+                            ContextCompat.getColor(binding.root.context, R.color.color_red)
                         background.setBounds(
                             itemView.right + dX.toInt(),
                             itemView.top,
@@ -126,14 +121,14 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                         swipeRightIcon.bounds.set(iconLeft, iconTop, iconRight, iconBottom)
                         swipeRightIcon.setTint(
                             ContextCompat.getColor(
-                                view.context,
+                                binding.root.context,
                                 R.color.color_white
                             )
                         )
                         swipeRightIcon.draw(c)
                     } else {
                         background.color =
-                            ContextCompat.getColor(view.context, R.color.color_green)
+                            ContextCompat.getColor(binding.root.context, R.color.color_green)
                         background.setBounds(
                             itemView.left + dX.toInt(),
                             itemView.top,
@@ -149,7 +144,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                         swipeLeftIcon.bounds.set(iconLeft, iconTop, iconRight, iconBottom)
                         swipeLeftIcon.setTint(
                             ContextCompat.getColor(
-                                view.context,
+                                binding.root.context,
                                 R.color.color_white
                             )
                         )
@@ -171,7 +166,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 }
             }
         )
-        itemTouchHelper.attachToRecyclerView(lvMain)
+        itemTouchHelper.attachToRecyclerView(binding.itemsList)
 
         //go to TaskScreen
         val launcher: ActivityResultLauncher<Intent> = registerForActivityResult(
@@ -193,16 +188,14 @@ class MainFragment : Fragment(R.layout.fragment_main) {
             }
         }
 
-        val fab: FloatingActionButton = view.findViewById(R.id.floatingActionButton)
-        fab.setOnClickListener {
-            val intent = Intent(view.context, TaskActivity::class.java)
-            launcher.launch(intent)
+        binding.floatingActionButton.setOnClickListener {
+            launcher.launch(Intent(binding.root.context, TaskActivity::class.java))
         }
 
         toDoListAdapter.setOnClickListener(
             object : TodoListAdapter.OnClickListener {
                 override fun onClick(position: Int, model: TodoItem) {
-                    val intent = Intent(view.context, TaskActivity::class.java)
+                    val intent = Intent(binding.root.context, TaskActivity::class.java)
                     intent.putExtra("item", model)
                     launcher.launch(intent)
                 }
@@ -214,7 +207,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         )
 
         //progressBar
-        val progressBarDialog = ProgressDialog(view.context).apply {
+        val progressBarDialog = ProgressDialog(binding.root.context).apply {
             setCancelable(false)
         }
         viewModel.operation.observe(viewLifecycleOwner) {
@@ -225,6 +218,6 @@ class MainFragment : Fragment(R.layout.fragment_main) {
             }
         }
 
-        return view
+        return binding.root
     }
 }

@@ -12,9 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.CompoundButton
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
@@ -22,11 +20,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.get
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.switchmaterial.SwitchMaterial
-import com.google.android.material.textfield.TextInputEditText
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
+import ru.startandroid.todoapp.databinding.FragmentTaskBinding
 import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.presentation.main.MainActivity
 import java.util.Calendar
@@ -43,19 +39,20 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.fragment_task, container, false)
+    ): View {
+
+        val binding: FragmentTaskBinding = FragmentTaskBinding.inflate(layoutInflater)
 
         getExistedItem()?.let { viewModel.setExistingItem(it) }
 
         val priorityListItems = resources.getStringArray(R.array.priorityListItems)
 
         //toolbar
-        view.findViewById<MaterialToolbar>(R.id.task_screen_toolbar).apply {
+        binding.taskScreenToolbar.apply {
             setNavigationIcon(R.drawable.property_1_close)
             inflateMenu(R.menu.top_app_task_screen_bar)
-            setOnMenuItemClickListener {
-                when (it.itemId) {
+            setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
                     R.id.save_text_button -> {
                         viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
                             resultIntent = Intent(this.context, MainActivity::class.java).apply {
@@ -65,14 +62,14 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                         true
                     }
 
-                    else -> super.onOptionsItemSelected(it)
+                    else -> super.onOptionsItemSelected(menuItem)
                 }
             }
             setNavigationOnClickListener { requireActivity().finish() }
         }
 
         //description
-        view.findViewById<TextInputEditText>(R.id.task_description).apply {
+        binding.taskDescription.apply {
             this.addTextChangedListener { text ->
                 viewModel.description.value = text.let { it!!.toString() }
             }
@@ -84,13 +81,12 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         }
 
         //priority
-        view.findViewById<AutoCompleteTextView>(R.id.priority).apply {
+        binding.priority.apply {
             val priorityAdapter = ArrayAdapter(
                 context,
                 R.layout.priority_list,
                 priorityListItems
             )
-
             setAdapter(priorityAdapter)
             addTextChangedListener { text ->
                 viewModel.priority.value = when (text?.toString()) {
@@ -114,7 +110,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         }
 
         //pick DueDate
-        view.findViewById<SwitchMaterial>(R.id.switch_date).apply {
+        binding.switchDate.apply {
             val onCheckedChangeListener = CompoundButton.OnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
                     val calendar = Calendar.getInstance()
@@ -137,14 +133,13 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
             setOnCheckedChangeListener(onCheckedChangeListener)
 
             //fill duedate field
-            val selectDateText = view.findViewById<TextView>(R.id.date_text)
             viewModel.dueDate.observe(viewLifecycleOwner) { incomDueDate ->
                 setOnCheckedChangeListener(null)
                 if (incomDueDate != null) {
-                    selectDateText.text = incomDueDate.toString("dd MMMM yyyy")
+                    binding.dateText.text = incomDueDate.toString("dd MMMM yyyy")
                     isChecked = true
                 } else {
-                    selectDateText.text = ""
+                    binding.dateText.text = ""
                     isChecked = false
                 }
                 setOnCheckedChangeListener(onCheckedChangeListener)
@@ -152,7 +147,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         }
 
         // delete button
-        view.findViewById<TextView>(R.id.delete_textView).apply {
+        binding.deleteTextView.apply {
             viewModel.isItemExists.observe(viewLifecycleOwner) { enabled ->
                 isEnabled = enabled
 
@@ -190,7 +185,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
             }
         }
 
-        return view
+        return binding.root
     }
 
     private fun getExistedItem(): TodoItem? {
