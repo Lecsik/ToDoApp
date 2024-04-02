@@ -2,7 +2,6 @@ package ru.startandroid.todoapp.presentation.task
 
 import android.app.DatePickerDialog
 import android.app.ProgressDialog
-import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
@@ -13,8 +12,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.CompoundButton
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -24,12 +23,22 @@ import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.databinding.FragmentTaskBinding
 import ru.startandroid.todoapp.models.TodoItem
-import ru.startandroid.todoapp.presentation.main.MainActivity
 import java.util.Calendar
 
 class TaskFragment : Fragment(R.layout.fragment_task) {
-    private val viewModel by lazy { ViewModelProvider(this).get<TaskViewModel>() }
-    private var resultIntent: Intent? = null
+
+    companion object {
+        const val RESULT_KEY = "TaskFragmentResultKey"
+        const val RESULT_NEW_ITEM_KEY = "newItem"
+        const val RESULT_DELETE_KEY = "deleteItem"
+
+        private const val ARGUMENT = "argument"
+
+        fun newInstance(todoItem: TodoItem? = null) = TaskFragment().apply {
+            arguments = bundleOf(ARGUMENT to todoItem)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -40,10 +49,19 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        val resultBundle = bundleOf()
+        val viewModel = ViewModelProvider(this).get<TaskViewModel>()
+
+        //getExistedItem
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arguments?.getParcelable(ARGUMENT, TodoItem::class.java)
+                ?.let { viewModel.setExistingItem(it) }
+        } else {
+            arguments?.getParcelable<TodoItem>(ARGUMENT)
+                ?.let { viewModel.setExistingItem(it) }
+        }
 
         val binding: FragmentTaskBinding = FragmentTaskBinding.inflate(layoutInflater)
-
-        getExistedItem()?.let { viewModel.setExistingItem(it) }
 
         val priorityListItems = resources.getStringArray(R.array.priorityListItems)
 
@@ -55,9 +73,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                 when (menuItem.itemId) {
                     R.id.save_text_button -> {
                         viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
-                            resultIntent = Intent(this.context, MainActivity::class.java).apply {
-                                putExtra("newItem", viewModel.save())
-                            }
+                            resultBundle.putParcelable(RESULT_NEW_ITEM_KEY, viewModel.save())
                         }
                         true
                     }
@@ -65,7 +81,9 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                     else -> super.onOptionsItemSelected(menuItem)
                 }
             }
-            setNavigationOnClickListener { requireActivity().finish() }
+            setNavigationOnClickListener {
+                parentFragmentManager.popBackStack()
+            }
         }
 
         //description
@@ -162,9 +180,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
             }
 
             setOnClickListener {
-                resultIntent = Intent(context, MainActivity::class.java).apply {
-                    putExtra("deleteItem", viewModel.remove())
-                }
+                resultBundle.putString(RESULT_DELETE_KEY, viewModel.remove())
             }
         }
 
@@ -180,17 +196,12 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
 
         viewModel.done.observe(viewLifecycleOwner) {
             if (it == true) {
-                requireActivity().setResult(AppCompatActivity.RESULT_OK, resultIntent)
-                requireActivity().finish()
+                parentFragmentManager.setFragmentResult(RESULT_KEY, resultBundle)
+                parentFragmentManager.popBackStack()
+
             }
         }
 
         return binding.root
-    }
-
-    private fun getExistedItem(): TodoItem? {
-        return if (Build.VERSION.SDK_INT >= 33) {
-            requireActivity().intent.getParcelableExtra("item", TodoItem::class.java)
-        } else requireActivity().intent.getParcelableExtra("item")
     }
 }

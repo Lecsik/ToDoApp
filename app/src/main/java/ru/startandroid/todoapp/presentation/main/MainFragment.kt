@@ -1,7 +1,6 @@
 package ru.startandroid.todoapp.presentation.main
 
 import android.app.ProgressDialog
-import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
@@ -9,9 +8,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -22,11 +18,10 @@ import androidx.recyclerview.widget.RecyclerView
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.databinding.FragmentMainBinding
 import ru.startandroid.todoapp.models.TodoItem
-import ru.startandroid.todoapp.presentation.task.TaskActivity
+import ru.startandroid.todoapp.presentation.task.TaskFragment
 
 class MainFragment : Fragment(R.layout.fragment_main) {
 
-    private val viewModel by lazy { ViewModelProvider(this).get<MainViewModel>() }
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -39,6 +34,8 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         binding.itemsList.layoutManager = LinearLayoutManager(
             binding.root.context, LinearLayoutManager.VERTICAL, false
         )
+
+        val viewModel = ViewModelProvider(this).get<MainViewModel>()
 
         //Toolbar visibility button
         binding.visibilityButton.setOnClickListener { viewModel.switchCompletedTasksVisibility() }
@@ -73,7 +70,6 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 0,
                 ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
             ) {
-
                 override fun onMove(
                     recyclerView: RecyclerView,
                     viewHolder: RecyclerView.ViewHolder,
@@ -169,35 +165,37 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         itemTouchHelper.attachToRecyclerView(binding.itemsList)
 
         //go to TaskScreen
-        val launcher: ActivityResultLauncher<Intent> = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == AppCompatActivity.RESULT_OK) {
-                if (result.data != null && result.data!!.hasExtra("deleteItem")) {
-                    toDoListAdapter.items =
-                        toDoListAdapter.items.filter { it.id != result.data!!.getStringExtra("deleteItem") }
-                }
-                if (result.data != null && result.data!!.hasExtra("newItem")) {
-                    val item: TodoItem =
-                        if (Build.VERSION.SDK_INT >= 33) {
-                            result.data!!.getParcelableExtra("newItem", TodoItem::class.java)!!
-                        } else result.data!!.getParcelableExtra("newItem")!!
-
-                    toDoListAdapter.items += item
-                }
+        parentFragmentManager.setFragmentResultListener(
+            TaskFragment.RESULT_KEY,
+            this
+        ) { _, bundle ->
+            bundle.getString(TaskFragment.RESULT_DELETE_KEY)?.let { id ->
+                toDoListAdapter.items = viewModel.items.value.orEmpty().filter { it.id != id }
             }
+
+            val newItem: TodoItem? =
+                if (Build.VERSION.SDK_INT >= 33) {
+                    bundle.getParcelable(TaskFragment.RESULT_NEW_ITEM_KEY, TodoItem::class.java)
+                } else bundle.getParcelable(TaskFragment.RESULT_NEW_ITEM_KEY)
+            if (newItem != null) toDoListAdapter.items = viewModel.items.value.orEmpty() + newItem
         }
 
         binding.floatingActionButton.setOnClickListener {
-            launcher.launch(Intent(binding.root.context, TaskActivity::class.java))
+            parentFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(android.R.id.content, TaskFragment.newInstance())
+                .addToBackStack("Main")
+                .commit()
         }
 
         toDoListAdapter.setOnClickListener(
             object : TodoListAdapter.OnClickListener {
                 override fun onClick(position: Int, model: TodoItem) {
-                    val intent = Intent(binding.root.context, TaskActivity::class.java)
-                    intent.putExtra("item", model)
-                    launcher.launch(intent)
+                    parentFragmentManager.beginTransaction()
+                        .setReorderingAllowed(true)
+                        .replace(android.R.id.content, TaskFragment.newInstance(model))
+                        .addToBackStack(null)
+                        .commit()
                 }
 
                 override fun onCheckChanged(position: Int, model: TodoItem, isChecked: Boolean) {
@@ -205,7 +203,6 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 }
             }
         )
-
         //progressBar
         val progressBarDialog = ProgressDialog(binding.root.context).apply {
             setCancelable(false)
@@ -217,7 +214,7 @@ class MainFragment : Fragment(R.layout.fragment_main) {
                 progressBarDialog.dismiss()
             }
         }
-
         return binding.root
     }
+
 }

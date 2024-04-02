@@ -7,8 +7,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        supportFragmentManager.beginTransaction()
-            .add(android.R.id.content, MainFragment())
-            .commit()
+
+        if (supportFragmentManager.fragments.isEmpty()) {
+            supportFragmentManager
+                .beginTransaction()
+                .add(android.R.id.content, MainFragment())
+                .commit()
+        }
     }
 }

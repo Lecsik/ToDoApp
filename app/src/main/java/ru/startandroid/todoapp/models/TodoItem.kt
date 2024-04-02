@@ -27,7 +27,7 @@ data class TodoItem(
     constructor(parcel: Parcel) : this(
         parcel.readString()!!,
         parcel.readString()!!,
-        Priority.values()[parcel.readInt()],
+        Priority.entries[parcel.readInt()],
         parcel.readInt() != 0,
         LocalDate.parse(parcel.readString())!!,
         parcel.readString()?.let { LocalDate.parse(it) },
