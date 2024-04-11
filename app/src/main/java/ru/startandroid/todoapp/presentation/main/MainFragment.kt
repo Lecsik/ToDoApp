@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -181,21 +182,15 @@ class MainFragment : Fragment(R.layout.fragment_main) {
         }
 
         binding.floatingActionButton.setOnClickListener {
-            parentFragmentManager.beginTransaction()
-                .setReorderingAllowed(true)
-                .replace(android.R.id.content, TaskFragment.newInstance())
-                .addToBackStack("Main")
-                .commit()
+            findNavController().navigate(MainFragmentDirections.actionMainFragmentToTaskFragment())
         }
 
         toDoListAdapter.setOnClickListener(
             object : TodoListAdapter.OnClickListener {
                 override fun onClick(position: Int, model: TodoItem) {
-                    parentFragmentManager.beginTransaction()
-                        .setReorderingAllowed(true)
-                        .replace(android.R.id.content, TaskFragment.newInstance(model))
-                        .addToBackStack(null)
-                        .commit()
+                    findNavController().navigate(
+                        MainFragmentDirections.actionMainFragmentToTaskFragment(model)
+                    )
                 }
 
                 override fun onCheckChanged(position: Int, model: TodoItem, isChecked: Boolean) {

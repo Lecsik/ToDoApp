@@ -5,7 +5,6 @@ import android.app.ProgressDialog
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -19,6 +18,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.get
+import androidx.navigation.findNavController
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.databinding.FragmentTaskBinding
@@ -31,12 +31,6 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         const val RESULT_KEY = "TaskFragmentResultKey"
         const val RESULT_NEW_ITEM_KEY = "newItem"
         const val RESULT_DELETE_KEY = "deleteItem"
-
-        private const val ARGUMENT = "argument"
-
-        fun newInstance(todoItem: TodoItem? = null) = TaskFragment().apply {
-            arguments = bundleOf(ARGUMENT to todoItem)
-        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,13 +47,8 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         val viewModel = ViewModelProvider(this).get<TaskViewModel>()
 
         //getExistedItem
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arguments?.getParcelable(ARGUMENT, TodoItem::class.java)
-                ?.let { viewModel.setExistingItem(it) }
-        } else {
-            arguments?.getParcelable<TodoItem>(ARGUMENT)
-                ?.let { viewModel.setExistingItem(it) }
-        }
+        TaskFragmentArgs.fromBundle(requireArguments()).todoItem
+            ?.let { viewModel.setExistingItem(it) }
 
         val binding: FragmentTaskBinding = FragmentTaskBinding.inflate(layoutInflater)
 
@@ -82,7 +71,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                 }
             }
             setNavigationOnClickListener {
-                parentFragmentManager.popBackStack()
+                findNavController().navigateUp()
             }
         }
 
@@ -197,8 +186,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         viewModel.done.observe(viewLifecycleOwner) {
             if (it == true) {
                 parentFragmentManager.setFragmentResult(RESULT_KEY, resultBundle)
-                parentFragmentManager.popBackStack()
-
+                requireView().findNavController().navigateUp()
             }
         }
 
