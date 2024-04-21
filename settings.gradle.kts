@@ -15,4 +15,4 @@ dependencyResolutionManagement {
     }
 }
 
-include(":app")
+include(":app", ":server")
