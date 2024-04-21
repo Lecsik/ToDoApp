@@ -2,73 +2,98 @@ package ru.startandroid.todoapp.presentation.task
 
 import android.app.DatePickerDialog
 import android.app.ProgressDialog
-import android.content.Intent
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
 import android.widget.CompoundButton
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.os.bundleOf
 import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.distinctUntilChanged
 import androidx.lifecycle.get
-import com.google.android.material.appbar.MaterialToolbar
-import com.google.android.material.switchmaterial.SwitchMaterial
-import com.google.android.material.textfield.TextInputEditText
+import androidx.navigation.findNavController
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
+import ru.startandroid.todoapp.databinding.FragmentTaskBinding
 import ru.startandroid.todoapp.models.TodoItem
-import ru.startandroid.todoapp.presentation.main.MainActivity
 import java.util.Calendar
 
-class TaskActivity : AppCompatActivity() {
+class TaskFragment : Fragment(R.layout.fragment_task) {
 
-    private val viewModel by lazy { ViewModelProvider(this).get<TaskViewModel>() }
-    private var resultIntent: Intent? = null
+    companion object {
+        const val RESULT_KEY = "TaskFragmentResultKey"
+        const val RESULT_NEW_ITEM_KEY = "newItem"
+        const val RESULT_DELETE_KEY = "deleteItem"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.task_screen)
+        setHasOptionsMenu(true)
+    }
 
-        getExistedItem()?.let { viewModel.setExistingItem(it) }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        val resultBundle = bundleOf()
+        val viewModel = ViewModelProvider(this).get<TaskViewModel>()
+
+        //getExistedItem
+        TaskFragmentArgs.fromBundle(requireArguments()).todoItem
+            ?.let { viewModel.setExistingItem(it) }
+
+        val binding: FragmentTaskBinding = FragmentTaskBinding.inflate(layoutInflater)
 
         val priorityListItems = resources.getStringArray(R.array.priorityListItems)
 
         //toolbar
-        findViewById<MaterialToolbar>(R.id.task_screen_toolbar).apply {
-            setSupportActionBar(this)
+        binding.taskScreenToolbar.apply {
             setNavigationIcon(R.drawable.property_1_close)
-            setNavigationOnClickListener { finish() }
+            inflateMenu(R.menu.top_app_task_screen_bar)
+            setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.save_text_button -> {
+                        viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
+                            resultBundle.putParcelable(RESULT_NEW_ITEM_KEY, viewModel.save())
+                        }
+                        true
+                    }
+
+                    else -> super.onOptionsItemSelected(menuItem)
+                }
+            }
+            setNavigationOnClickListener {
+                findNavController().navigateUp()
+            }
         }
 
         //description
-        findViewById<TextInputEditText>(R.id.task_description).apply {
+        binding.taskDescription.apply {
             this.addTextChangedListener { text ->
                 viewModel.description.value = text.let { it!!.toString() }
             }
 
-            viewModel.description.observe(this@TaskActivity) {
+            viewModel.description.observe(viewLifecycleOwner) {
                 if (it == text?.toString()) return@observe
                 setText(it)
             }
         }
 
         //priority
-        findViewById<AutoCompleteTextView>(R.id.priority).apply {
+        binding.priority.apply {
             val priorityAdapter = ArrayAdapter(
-                this@TaskActivity,
+                context,
                 R.layout.priority_list,
                 priorityListItems
             )
-
             setAdapter(priorityAdapter)
             addTextChangedListener { text ->
                 viewModel.priority.value = when (text?.toString()) {
@@ -78,7 +103,7 @@ class TaskActivity : AppCompatActivity() {
                     else -> TodoItem.Priority.NONE
                 }
             }
-            viewModel.priority.distinctUntilChanged().observe(this@TaskActivity) {
+            viewModel.priority.distinctUntilChanged().observe(viewLifecycleOwner) {
                 setText(
                     when (it) {
                         TodoItem.Priority.HIGH -> priorityListItems[2]
@@ -91,14 +116,13 @@ class TaskActivity : AppCompatActivity() {
             }
         }
 
-
         //pick DueDate
-        findViewById<SwitchMaterial>(R.id.switch_date).apply {
+        binding.switchDate.apply {
             val onCheckedChangeListener = CompoundButton.OnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {
                     val calendar = Calendar.getInstance()
                     val datePickerDialog = DatePickerDialog(
-                        this@TaskActivity,
+                        context,
                         { _, year, month, dayOfMonth ->
                             val date = LocalDate(year, month + 1, dayOfMonth)
                             viewModel.dueDate.value = date
@@ -116,14 +140,13 @@ class TaskActivity : AppCompatActivity() {
             setOnCheckedChangeListener(onCheckedChangeListener)
 
             //fill duedate field
-            val selectDateText = this@TaskActivity.findViewById<TextView>(R.id.date_text)
-            viewModel.dueDate.observe(this@TaskActivity) { incomDueDate ->
+            viewModel.dueDate.observe(viewLifecycleOwner) { incomDueDate ->
                 setOnCheckedChangeListener(null)
                 if (incomDueDate != null) {
-                    selectDateText.text = incomDueDate.toString("dd MMMM yyyy")
+                    binding.dateText.text = incomDueDate.toString("dd MMMM yyyy")
                     isChecked = true
                 } else {
-                    selectDateText.text = ""
+                    binding.dateText.text = ""
                     isChecked = false
                 }
                 setOnCheckedChangeListener(onCheckedChangeListener)
@@ -131,69 +154,42 @@ class TaskActivity : AppCompatActivity() {
         }
 
         // delete button
-        findViewById<TextView>(R.id.delete_textView).apply {
-            viewModel.isItemExists.observe(this@TaskActivity) { enabled ->
+        binding.deleteTextView.apply {
+            viewModel.isItemExists.observe(viewLifecycleOwner) { enabled ->
                 isEnabled = enabled
 
                 val color = if (enabled) R.color.color_red else R.color.label_disable
-                setTextColor(ContextCompat.getColor(this@TaskActivity, color))
+                setTextColor(ContextCompat.getColor(context, color))
                 compoundDrawablesRelative.forEach { drawable: Drawable? ->
                     drawable?.colorFilter = PorterDuffColorFilter(
-                        ContextCompat.getColor(this@TaskActivity, color),
+                        ContextCompat.getColor(context, color),
                         PorterDuff.Mode.SRC_IN
                     )
                 }
             }
 
             setOnClickListener {
-                resultIntent = Intent(this@TaskActivity, MainActivity::class.java).apply {
-                    putExtra("deleteItem", viewModel.remove())
-                }
+                resultBundle.putString(RESULT_DELETE_KEY, viewModel.remove())
             }
         }
 
         //progressBar
-        val progressBarDialog = ProgressDialog(this@TaskActivity).apply {
+        val progressBarDialog = ProgressDialog(context).apply {
             setCancelable(false)
         }
-        viewModel.operation.observe(this) {
+        viewModel.operation.observe(viewLifecycleOwner) {
             if (it == TaskViewModel.Operation.LOADING) {
                 progressBarDialog.show()
             } else progressBarDialog.dismiss()
         }
 
-        viewModel.done.observe(this@TaskActivity) {
+        viewModel.done.observe(viewLifecycleOwner) {
             if (it == true) {
-                setResult(RESULT_OK, resultIntent)
-                finish()
+                parentFragmentManager.setFragmentResult(RESULT_KEY, resultBundle)
+                requireView().findNavController().navigateUp()
             }
         }
-    }
 
-    private fun getExistedItem(): TodoItem? {
-        return if (Build.VERSION.SDK_INT >= 33) {
-            intent.getParcelableExtra("item", TodoItem::class.java)
-        } else intent.getParcelableExtra("item")
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.top_app_task_screen_bar, menu)
-        return true
-    }
-
-    // Menu - Save
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.save_text_button -> {
-                viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
-                    resultIntent = Intent(this@TaskActivity, MainActivity::class.java).apply {
-                        putExtra("newItem", viewModel.save())
-                    }
-                }
-                return true
-            }
-
-            else -> super.onOptionsItemSelected(item)
-        }
+        return binding.root
     }
 }

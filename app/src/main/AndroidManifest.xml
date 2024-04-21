@@ -26,14 +26,6 @@
                 android:name="android.app.lib_name"
                 android:value="" />
         </activity>
-        <activity
-            android:name="ru.startandroid.todoapp.presentation.task.TaskActivity"
-            android:label=""
-            android:parentActivityName=".presentation.main.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".presentation.main.MainActivity" />
-        </activity>
     </application>
 
 </manifest>
