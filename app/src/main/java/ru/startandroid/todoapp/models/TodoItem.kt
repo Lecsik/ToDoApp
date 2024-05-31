@@ -3,19 +3,20 @@ package ru.startandroid.todoapp.models
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.room.Entity
+import kotlinx.serialization.Serializable
 import org.joda.time.LocalDate
+import ru.startandroid.todoapp.data.LocalDateSerializer
 
-@Entity(
-    primaryKeys = ["id"]
-)
+@Entity(primaryKeys = ["id"])
+@Serializable
 data class TodoItem(
     val id: String,
     val description: String,
     val priority: Priority,
     val isCompleted: Boolean,
-    val createdDate: LocalDate,
-    val dueDate: LocalDate?,
-    val changedDate: LocalDate?
+    @Serializable(LocalDateSerializer::class) val createdDate: LocalDate,
+    @Serializable(LocalDateSerializer::class) val dueDate: LocalDate?,
+    @Serializable(LocalDateSerializer::class) val changedDate: LocalDate?
 ) : Parcelable {
 
     enum class Priority {

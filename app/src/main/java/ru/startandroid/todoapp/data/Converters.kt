@@ -20,6 +20,6 @@ internal object Converters {
     @TypeConverter
     @JvmStatic
     fun intToPriority(value: Int?): TodoItem.Priority? =
-        value?.let { TodoItem.Priority.values()[it] }
+        value?.let { TodoItem.Priority.entries[it] }
 
 }
