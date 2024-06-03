@@ -1,3 +1,5 @@
+rootProject.name = "ToDoApp"
+
 pluginManagement {
     repositories {
         gradlePluginPortal()
@@ -12,5 +14,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ToDoApp"
-include ':app'
+
+include(":app", ":server")
