@@ -1,17 +1,22 @@
 package ru.startandroid.todoapp.presentation.task
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import org.joda.time.LocalDate
+import org.kodein.di.DIAware
+import org.kodein.di.android.x.closestDI
+import org.kodein.di.instance
 import ru.startandroid.todoapp.data.TodoItemsRepository
 import ru.startandroid.todoapp.models.TodoItem
 import java.util.UUID
 
-class TaskViewModel : ViewModel() {
-    private val repository = TodoItemsRepository.INSTANCE
+class TaskViewModel(application: Application) : AndroidViewModel(application), DIAware {
+    override val di by closestDI()
+    private val repository: TodoItemsRepository by di.instance()
 
     private var existingItem: TodoItem? = null
     fun setExistingItem(item: TodoItem) {

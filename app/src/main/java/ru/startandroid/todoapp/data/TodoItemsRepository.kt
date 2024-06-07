@@ -1,32 +1,14 @@
 package ru.startandroid.todoapp.data
 
-import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.liveData
-import androidx.room.Room
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.models.TodoItem
 
-
-class TodoItemsRepository {
-
-    companion object {
-        val INSTANCE = TodoItemsRepository()
-    }
-
-    private lateinit var database: TodoItemDatabase
-    private val api = TodoItemApi.INSTANCE
-
-    fun init(context: Context) {
-        database = Room.databaseBuilder(
-            context,
-            TodoItemDatabase::class.java,
-            "database.db"
-        ).build()
-    }
+class TodoItemsRepository(private val database: TodoItemDatabase, private val api: TodoItemApi) {
 
     private val mutex = Mutex()
 
