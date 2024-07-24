@@ -1,18 +1,24 @@
 package ru.startandroid.todoapp.presentation.main
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import org.kodein.di.DIAware
+import org.kodein.di.android.x.closestDI
+import org.kodein.di.instance
 import ru.startandroid.todoapp.data.TodoItemsRepository
 import ru.startandroid.todoapp.models.TodoItem
 
-class MainViewModel : ViewModel() {
+class MainViewModel(application: Application) : AndroidViewModel(application), DIAware {
 
-    private val repository = TodoItemsRepository.INSTANCE
+    override val di by closestDI()
+
+    private val repository: TodoItemsRepository by di.instance()
 
     private val isCompletedTasksVisiblePrivate = MutableLiveData(false)
     val isCompletedTasksVisible: LiveData<Boolean> get() = isCompletedTasksVisiblePrivate
