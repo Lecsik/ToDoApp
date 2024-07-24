@@ -5,6 +5,12 @@
     <color name="secondary">@color/color_blue</color>
     <color name="success">@color/color_green</color>
 
+    <color name="priority_high">#EF5350</color>
+    <color name="priority_low">#308F8F</color>
+    <color name="priority_none">#3C465A</color>
+    <color name="delete">#9B1D1A</color>
+    <color name="done">#A9DE4A</color>
+
 
     <color name="support_separator">#33000000</color>
     <color name="support_overlay">#0F000000</color>
