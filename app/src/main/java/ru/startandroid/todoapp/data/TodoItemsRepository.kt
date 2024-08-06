@@ -22,12 +22,12 @@ class TodoItemsRepository(private val database: TodoItemDatabase, private val ap
 
     suspend fun addItem(item: TodoItem) = withContext(Dispatchers.IO) {
         api.addItem(item)
-        mutex.unlock()
+        if (mutex.isLocked) mutex.unlock()
     }
 
     suspend fun removeItem(id: String) = withContext(Dispatchers.IO) {
         api.deleteItem(id)
-        mutex.unlock()
+        if (mutex.isLocked) mutex.unlock()
     }
 
     suspend fun setCompleted(id: String, isCompleted: Boolean) {
