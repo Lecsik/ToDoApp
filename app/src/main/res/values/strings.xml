@@ -15,7 +15,7 @@
     <string name="description_text">Что надо сделать…</string>
     <string name="importance_label"><font size="42">Важность</font></string>
     <string name="deadline_label">Сделать до </string>
-    <string name="null_date">01 янв 0001</string>
+    <string name="null_date">Без даты</string>
 
     <string name="delete_label">Удалить</string>
     <string-array name="priorityListItems">

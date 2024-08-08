@@ -6,7 +6,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
@@ -28,6 +31,7 @@ import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.ComposeView
@@ -69,12 +73,13 @@ class MainFragment : Fragment() {
     @Composable
     fun TodoItemListData(viewModel: MainViewModel) {
         val switchCompletedTasksVisibility = { viewModel.switchCompletedTasksVisibility() }
-        val isCompletedTasksVisible by viewModel.isCompletedTasksVisible.observeAsState()
+        val isCompletedTasksVisible by viewModel.isCompletedTasksVisible.observeAsState(false)
         val itemsList by viewModel.items.observeAsState(emptyList())
-        val countCompleted by viewModel.count.observeAsState()
+        val countCompleted by viewModel.count.observeAsState(0)
         val onRemoveClick = { position: Int -> viewModel.removeItem(position) }
         val onSetCompleted =
             { position: Int, isCompleted: Boolean -> viewModel.setCompleted(position, isCompleted) }
+        val operation by viewModel.operation.observeAsState()
         var items = itemsList
         parentFragmentManager.setFragmentResultListener(
             TaskFragment.RESULT_KEY,
@@ -89,15 +94,23 @@ class MainFragment : Fragment() {
                 } else bundle.getParcelable(TaskFragment.RESULT_NEW_ITEM_KEY)
             if (newItem != null) items = itemsList + newItem
         }
-        if (countCompleted != null && isCompletedTasksVisible != null) {
-            TodoItemListPresentation(
-                switchCompletedTasksVisibility = switchCompletedTasksVisibility,
-                isCompletedTasksVisible = isCompletedTasksVisible!!,
-                list = items,
-                countCompleted = countCompleted!!,
-                onRemoveClick = onRemoveClick,
-                onSetCompleted = onSetCompleted
-            )
+        TodoItemListPresentation(
+            switchCompletedTasksVisibility = switchCompletedTasksVisibility,
+            isCompletedTasksVisible = isCompletedTasksVisible,
+            list = items,
+            countCompleted = countCompleted,
+            onRemoveClick = onRemoveClick,
+            onSetCompleted = onSetCompleted
+        )
+        if (operation == MainViewModel.Operation.LOADING) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                LinearProgressIndicator(Modifier.align(Alignment.Center))
+            }
         }
     }
 

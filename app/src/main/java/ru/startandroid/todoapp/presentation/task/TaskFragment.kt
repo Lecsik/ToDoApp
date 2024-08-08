@@ -6,7 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -32,6 +34,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
@@ -92,13 +96,15 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         return ComposeView(requireContext()).apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                val priority by viewModel.priority.observeAsState()
-                val description by viewModel.description.observeAsState()
+                val priority by viewModel.priority.observeAsState(TodoItem.Priority.NONE)
+                val description by viewModel.description.observeAsState("")
                 val dueDate by viewModel.dueDate.observeAsState()
-                val done by viewModel.done.observeAsState()
-                val isItemExists by viewModel.isItemExists.observeAsState()
+                val done by viewModel.done.observeAsState(false)
+                val isItemExists by viewModel.isItemExists.observeAsState(false)
+                val operation by viewModel.operation.observeAsState()
 
                 MyTheme {
+
                     TaskScreen(
                         onBack = { findNavController().navigateUp() },
                         onDelete = {
@@ -107,30 +113,39 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                                 viewModel.remove()
                             )
                         },
-                        priority = priority!!,
-                        description = description!!,
+                        priority = priority,
+                        description = description,
                         onDescription = { text -> viewModel.description.value = text },
                         dueDate = dueDate,
-                        onChangeDueDate = { date: LocalDate -> viewModel.dueDate.value = date },
+                        onChangeDueDate = { date: LocalDate? -> viewModel.dueDate.value = date },
                         onPriorityButton = { priority: TodoItem.Priority ->
                             viewModel.priority.value = priority
                         },
-                        isItemExists = isItemExists!!,
+                        isItemExists = isItemExists,
                         onSaveItem = {
                             viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
                                 resultBundle.putParcelable(RESULT_NEW_ITEM_KEY, viewModel.save())
                             }
                         })
                 }
-                if (done!!) {
+                if (done) {
                     parentFragmentManager.setFragmentResult(RESULT_KEY, resultBundle)
                     requireView().findNavController().navigateUp()
+                }
+                if (operation == TaskViewModel.Operation.LOADING) {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LinearProgressIndicator(Modifier.align(Alignment.Center))
+                    }
                 }
             }
         }
 
     }
-
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
@@ -141,7 +156,7 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
         description: String,
         onDescription: (String) -> Unit,
         dueDate: LocalDate?,
-        onChangeDueDate: (LocalDate) -> Unit,
+        onChangeDueDate: (LocalDate?) -> Unit,
         onPriorityButton: (TodoItem.Priority) -> Unit,
         isItemExists: Boolean,
         onSaveItem: () -> Unit
@@ -174,7 +189,13 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                     actions = {
                         IconButton(
                             onClick = { mDisplayMenu = !mDisplayMenu },
-                            enabled = isItemExists
+                            enabled = isItemExists,
+                            colors = IconButtonColors(
+                                containerColor = Color.Unspecified,
+                                contentColor = Color.Unspecified,
+                                disabledContentColor = Color.Unspecified.copy(alpha = 0.001f),
+                                disabledContainerColor = Color.Unspecified.copy(alpha = 0.0f)
+                            )
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.MoreVert,
@@ -278,23 +299,43 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                         DatePickerDialog(
                             onDismissRequest = { showDatePicker = false },
                             confirmButton = {
-                                TextButton(onClick = {
-                                    onChangeDueDate(
-                                        LocalDate(
-                                            deadline.selectedDateMillis,
-                                            DateTimeZone.UTC
+                                Row {
+                                    TextButton(
+                                        onClick = {
+                                            onChangeDueDate(null)
+                                            showDatePicker = false
+                                        },
+                                        Modifier.padding(horizontal = 12.dp),
+                                        enabled = dueDate != null,
+                                        colors = ButtonColors(
+                                            containerColor = Color.Transparent,
+                                            contentColor = MaterialTheme.colorScheme.primary,
+                                            disabledContentColor = Color.Transparent.copy(alpha = 0.001f),
+                                            disabledContainerColor = Color.Transparent.copy(alpha = 0.001f)
                                         )
-                                    )
-                                    showDatePicker = false
-                                }) {
-                                    Text(text = stringResource(android.R.string.ok))
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(
-                                    onClick = { showDatePicker = false }
-                                ) {
-                                    Text(text = stringResource(R.string.cancel_label))
+                                    ) {
+                                        Text(text = stringResource(R.string.delete_label))
+                                    }
+                                    Spacer(modifier = Modifier.weight(1.0f))
+                                    TextButton(
+                                        onClick = { showDatePicker = false }
+                                    ) {
+                                        Text(text = stringResource(R.string.cancel_label))
+                                    }
+
+                                    TextButton(
+                                        onClick = {
+                                            onChangeDueDate(
+                                                LocalDate(
+                                                    deadline.selectedDateMillis,
+                                                    DateTimeZone.UTC
+                                                )
+                                            )
+                                            showDatePicker = false
+                                        }
+                                    ) {
+                                        Text(text = stringResource(android.R.string.ok))
+                                    }
                                 }
                             }
                         ) {
