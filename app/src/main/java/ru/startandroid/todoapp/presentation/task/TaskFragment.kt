@@ -25,7 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -34,7 +34,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -74,7 +73,7 @@ import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
-class TaskFragment : Fragment(R.layout.fragment_task) {
+class TaskFragment : Fragment() {
 
     companion object {
         const val RESULT_KEY = "TaskFragmentResultKey"
@@ -104,7 +103,6 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                 val operation by viewModel.operation.observeAsState()
 
                 MyTheme {
-
                     TaskScreen(
                         onBack = { findNavController().navigateUp() },
                         onDelete = {
@@ -187,42 +185,36 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                         }
                     },
                     actions = {
-                        IconButton(
-                            onClick = { mDisplayMenu = !mDisplayMenu },
-                            enabled = isItemExists,
-                            colors = IconButtonColors(
-                                containerColor = Color.Unspecified,
-                                contentColor = Color.Unspecified,
-                                disabledContentColor = Color.Unspecified.copy(alpha = 0.001f),
-                                disabledContainerColor = Color.Unspecified.copy(alpha = 0.0f)
-                            )
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.MoreVert,
-                                contentDescription = stringResource(id = R.string.menu_buton)
-                            )
-                        }
-                        DropdownMenu(
-                            expanded = mDisplayMenu,
-                            onDismissRequest = { mDisplayMenu = false }) {
-                            DropdownMenuItem(
-                                {
-                                    Row {
-                                        Text(stringResource(id = R.string.delete_label))
-                                        Spacer(modifier = Modifier.weight(1.0f))
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = stringResource(
-                                                id = R.string.delete_label
-                                            ),
-                                            tint = colorResource(id = R.color.delete)
-                                        )
-                                    }
-
-                                },
-                                onClick = { onDelete() },
-                                Modifier.wrapContentSize()
-                            )
+                        if (isItemExists) {
+                            IconButton(
+                                onClick = { mDisplayMenu = !mDisplayMenu }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = stringResource(id = R.string.menu_buton)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = mDisplayMenu,
+                                onDismissRequest = { mDisplayMenu = false }) {
+                                DropdownMenuItem(
+                                    text = {
+                                        Row {
+                                            Icon(
+                                                imageVector = Icons.Default.Delete,
+                                                contentDescription = stringResource(
+                                                    id = R.string.delete_label
+                                                ),
+                                                tint = colorResource(id = R.color.delete)
+                                            )
+                                            Spacer(modifier = Modifier.weight(1.0f))
+                                            Text(stringResource(id = R.string.delete_label))
+                                        }
+                                    },
+                                    onClick = onDelete,
+                                    modifier = Modifier.wrapContentSize()
+                                )
+                            }
                         }
                     },
 
@@ -241,7 +233,6 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Spacer(modifier = Modifier.height(20.dp))
-
                 OutlinedCard(
                     border = BorderStroke(2.dp, colorPriority),
                     modifier = Modifier
@@ -300,23 +291,20 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                             onDismissRequest = { showDatePicker = false },
                             confirmButton = {
                                 Row {
-                                    TextButton(
-                                        onClick = {
-                                            onChangeDueDate(null)
-                                            showDatePicker = false
-                                        },
-                                        Modifier.padding(horizontal = 12.dp),
-                                        enabled = dueDate != null,
-                                        colors = ButtonColors(
-                                            containerColor = Color.Transparent,
-                                            contentColor = MaterialTheme.colorScheme.primary,
-                                            disabledContentColor = Color.Transparent.copy(alpha = 0.001f),
-                                            disabledContainerColor = Color.Transparent.copy(alpha = 0.001f)
-                                        )
-                                    ) {
-                                        Text(text = stringResource(R.string.delete_label))
+                                    if (dueDate != null) {
+                                        TextButton(
+                                            onClick = {
+                                                onChangeDueDate(null)
+                                                showDatePicker = false
+                                            },
+                                            Modifier.padding(horizontal = 12.dp)
+                                        ) {
+                                            Text(text = stringResource(R.string.delete_label))
+                                        }
+
+                                        Spacer(modifier = Modifier.weight(1.0f))
                                     }
-                                    Spacer(modifier = Modifier.weight(1.0f))
+
                                     TextButton(
                                         onClick = { showDatePicker = false }
                                     ) {
@@ -347,57 +335,32 @@ class TaskFragment : Fragment(R.layout.fragment_task) {
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
-                    OutlinedButton(
-                        onClick = { onPriorityButton(TodoItem.Priority.NONE) },
-                        Modifier
-                            .weight(1.0f)
-                            .padding(end = 8.dp),
-                        colors = ButtonColors(
-                            if (priority == TodoItem.Priority.NONE) colorPriority else MaterialTheme.colorScheme.background,
-                            if (priority == TodoItem.Priority.NONE) Color.White else colorResource(
-                                id = R.color.priority_none
+                    TodoItem.Priority.entries.forEachIndexed { index, entry ->
+                        val contentColor = colorResource(
+                            when (entry) {
+                                TodoItem.Priority.NONE -> R.color.priority_none
+                                TodoItem.Priority.LOW -> R.color.priority_low
+                                TodoItem.Priority.HIGH -> R.color.priority_high
+                            }
+                        )
+                        OutlinedButton(
+                            onClick = { onPriorityButton(entry) },
+                            Modifier
+                                .weight(1.0f)
+                                .padding(end = 8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                if (priority == entry) colorPriority else MaterialTheme.colorScheme.background,
+                                if (priority == entry) Color.White else contentColor
                             ),
-                            Color.Unspecified,
-                            Color.Unspecified
-                        ),
-                        border = BorderStroke(2.dp, colorResource(id = R.color.priority_none))
-                    ) {
-                        Text(text = stringArrayResource(id = R.array.priorityListItems)[0])
-                    }
-                    OutlinedButton(
-                        onClick = { onPriorityButton(TodoItem.Priority.LOW) },
-                        Modifier
-                            .weight(1.0f)
-                            .padding(end = 8.dp),
-                        colors = ButtonColors(
-                            if (priority == TodoItem.Priority.LOW) colorPriority else MaterialTheme.colorScheme.background,
-                            if (priority == TodoItem.Priority.LOW) Color.White else colorResource(id = R.color.priority_low),
-                            Color.Unspecified,
-                            Color.Unspecified
-                        ),
-                        border = BorderStroke(2.dp, colorResource(id = R.color.priority_low))
-                    ) {
-                        Text(text = stringArrayResource(id = R.array.priorityListItems)[1])
-                    }
-                    OutlinedButton(
-                        onClick = { onPriorityButton(TodoItem.Priority.HIGH) },
-                        Modifier.weight(1.0f),
-                        colors = ButtonColors(
-                            if (priority == TodoItem.Priority.HIGH) colorPriority else MaterialTheme.colorScheme.background,
-                            if (priority == TodoItem.Priority.HIGH) Color.White else colorResource(
-                                id = R.color.priority_high
-                            ),
-                            Color.Unspecified,
-                            Color.Unspecified
-                        ),
-                        border = BorderStroke(2.dp, colorResource(id = R.color.priority_high))
-                    ) {
-                        Text(text = stringArrayResource(id = R.array.priorityListItems)[2])
+                            border = BorderStroke(2.dp, contentColor)
+                        ) {
+                            Text(text = stringArrayResource(id = R.array.priorityListItems)[index])
+                        }
                     }
                 }
                 Spacer(Modifier.weight(1.0f))
                 Button(
-                    onClick = { onSaveItem() },
+                    onClick = onSaveItem,
                     Modifier
                         .padding(horizontal = 8.dp, vertical = 20.dp)
                         .fillMaxWidth(),

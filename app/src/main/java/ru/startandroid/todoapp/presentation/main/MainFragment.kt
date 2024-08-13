@@ -36,7 +36,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -140,7 +139,7 @@ class MainFragment : Fragment() {
                                 ),
 
                                 fontSize = 16.sp,
-                                color = colorResource(id = R.color.label_tertiary)
+                                color = MaterialTheme.colorScheme.secondary
                             )
                         }
                     },
@@ -199,6 +198,7 @@ class MainFragment : Fragment() {
     }
 
     @Preview
+    @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
     @Composable
     fun TodoItemListPreview() {
         MyTheme {
@@ -258,68 +258,6 @@ class MainFragment : Fragment() {
             )
         }
 
-    }
-
-
-    @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-    @Composable
-    fun TodoItemListNightPreview() {
-        MyTheme {
-            TodoItemListPresentation(
-                switchCompletedTasksVisibility = { },
-                isCompletedTasksVisible = true,
-                list = listOf(
-                    TodoItem(
-                        "11111",
-                        "1111111",
-                        TodoItem.Priority.LOW,
-                        false,
-                        LocalDate.now(),
-                        null,
-                        null
-                    ),
-                    TodoItem(
-                        "11112",
-                        "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
-                        TodoItem.Priority.LOW,
-                        false,
-                        LocalDate.now(),
-                        LocalDate(1996, 4, 4),
-                        null
-                    ),
-                    TodoItem(
-                        "11113",
-                        "Jetpack Compose",
-                        TodoItem.Priority.HIGH,
-                        true,
-                        LocalDate.now(),
-                        null,
-                        null
-                    ),
-                    TodoItem(
-                        "11114",
-                        "View в Android",
-                        TodoItem.Priority.HIGH,
-                        false,
-                        LocalDate.now(),
-                        LocalDate(1996, 4, 4),
-                        null
-                    ),
-                    TodoItem(
-                        "11115",
-                        "Многопоточность",
-                        TodoItem.Priority.LOW,
-                        true,
-                        LocalDate.now(),
-                        LocalDate(1996, 4, 4),
-                        null
-                    )
-                ),
-                countCompleted = 2,
-                onRemoveClick = {},
-                onSetCompleted = { _, _ -> }
-            )
-        }
     }
 }
 

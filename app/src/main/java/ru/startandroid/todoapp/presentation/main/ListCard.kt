@@ -25,8 +25,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -99,9 +101,9 @@ fun ItemCard(
                 }
             }
 
-            val openAlertDialog = remember { mutableStateOf(false) }
+            var openAlertDialog by remember { mutableStateOf(false) }
             IconButton(
-                onClick = { openAlertDialog.value = true }
+                onClick = { openAlertDialog = true }
             ) {
                 Icon(
                     Icons.Default.Clear,
@@ -109,11 +111,11 @@ fun ItemCard(
                     tint = MaterialTheme.colorScheme.error
                 )
             }
-            if (openAlertDialog.value) {
+            if (openAlertDialog) {
                 DeleteAlertDialog(
-                    onDismissRequest = { openAlertDialog.value = false },
+                    onDismissRequest = { openAlertDialog = false },
                     onConfirmation = {
-                        openAlertDialog.value = false
+                        openAlertDialog = false
                         onRemove(index)
                     },
                     dialogTitle = stringResource(id = R.string.delete_dialog_title),
@@ -124,85 +126,6 @@ fun ItemCard(
     }
 }
 
-/*@Composable
-fun DismissBackground(dismissState: SwipeToDismissBoxState) {
-    val color = when (dismissState.dismissDirection) {
-        SwipeToDismissBoxValue.StartToEnd -> colorResource(R.color.delete)
-        SwipeToDismissBoxValue.EndToStart -> colorResource(R.color.done)
-        SwipeToDismissBoxValue.Settled -> Color.Transparent
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color)
-            .padding(12.dp, 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Icon(Icons.Default.Delete, contentDescription = stringResource(id = R.string.right_swipe))
-        Spacer(modifier = Modifier)
-        Icon(Icons.Default.Done, contentDescription = stringResource(id = R.string.left_swipe))
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ListCard(
-    item: TodoItem,
-    listIndex: Int,
-    modifier: Modifier = Modifier,
-    onRemove: (Int) -> Unit,
-    onSetCompleted: (Int, Boolean) -> Unit
-) {
-    val context = LocalContext.current
-    val currentItem by rememberUpdatedState(item)
-    val currentIndex by rememberUpdatedState(newValue = listIndex)
-
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = {
-            when (it) {
-                SwipeToDismissBoxValue.StartToEnd -> {
-                    onRemove(currentIndex)
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.right_swipe),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-                SwipeToDismissBoxValue.EndToStart -> {
-                    onSetCompleted(currentIndex, currentItem.isCompleted)
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.left_swipe),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-                SwipeToDismissBoxValue.Settled -> return@rememberSwipeToDismissBoxState false
-            }
-            return@rememberSwipeToDismissBoxState true
-        },
-        // positional threshold of 25%
-        positionalThreshold = { it * .25f }
-    )
-    SwipeToDismissBox(
-        state = dismissState,
-        modifier = modifier,
-        backgroundContent = { DismissBackground(dismissState) },
-        content = {
-            ItemCard(
-                isChecked = item.isCompleted,
-                onCheckedChange = { onSetCompleted(listIndex, item.isCompleted) },
-                onRemove = { onRemove(listIndex) },
-                index = listIndex,
-                description = item.description,
-                dueDate = item.dueDate,
-                priority = item.priority
-            )
-        })
-}*/
-
 @Composable
 fun DeleteAlertDialog(
     onDismissRequest: () -> Unit,
@@ -211,23 +134,19 @@ fun DeleteAlertDialog(
     dialogText: String
 ) {
     AlertDialog(
-        onDismissRequest = { onDismissRequest() },
+        onDismissRequest = onDismissRequest,
         title = { Text(dialogTitle) },
         text = { Text(dialogText) },
         confirmButton = {
             TextButton(
-                onClick = {
-                    onConfirmation()
-                }
+                onClick = onConfirmation
             ) {
                 Text(stringResource(id = R.string.delete_label))
             }
         },
         dismissButton = {
             TextButton(
-                onClick = {
-                    onDismissRequest()
-                }
+                onClick = onDismissRequest
             ) {
                 Text(stringResource(id = R.string.cancel_label))
             }
