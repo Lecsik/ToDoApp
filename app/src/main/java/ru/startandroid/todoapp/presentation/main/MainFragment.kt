@@ -1,215 +1,263 @@
 package ru.startandroid.todoapp.presentation.main
 
-import android.app.ProgressDialog
-import android.graphics.Canvas
-import android.graphics.drawable.ColorDrawable
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.get
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
-import ru.startandroid.todoapp.databinding.FragmentMainBinding
 import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.presentation.task.TaskFragment
+import ru.startandroid.todoapp.ui.theme.MyTheme
 
-class MainFragment : Fragment(R.layout.fragment_main) {
+class MainFragment : Fragment() {
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        val binding: FragmentMainBinding = FragmentMainBinding.inflate(layoutInflater)
-
-        val toDoListAdapter = TodoListAdapter()
-        binding.itemsList.adapter = toDoListAdapter
-        binding.itemsList.layoutManager = LinearLayoutManager(
-            binding.root.context, LinearLayoutManager.VERTICAL, false
-        )
-
         val viewModel = ViewModelProvider(this).get<MainViewModel>()
-
-        //Toolbar visibility button
-        binding.visibilityButton.setOnClickListener { viewModel.switchCompletedTasksVisibility() }
-        viewModel.isCompletedTasksVisible.observe(viewLifecycleOwner) { isCompletedTasksVisible ->
-            binding.visibilityButton.setImageResource(
-                if (isCompletedTasksVisible) R.drawable.visibility_off
-                else R.drawable.visibility
-            )
-        }
-
-        viewModel.items.observe(viewLifecycleOwner) {
-            binding.itemsList.post { toDoListAdapter.items = it }
-        }
-
-        viewModel.count.observe(viewLifecycleOwner) {
-            binding.executedTitle.text = getString(R.string.executed_title, it)
-        }
-
-        //On swipe
-        val background = ColorDrawable()
-        val swipeRightIcon =
-            ContextCompat.getDrawable(binding.root.context, R.drawable.property_1_delete)!!
-        val swipeLeftIcon =
-            ContextCompat.getDrawable(binding.root.context, R.drawable.property_1_check)!!
-        val intrinsicHeightRight = swipeRightIcon.intrinsicHeight
-        val intrinsicWidthRight = swipeRightIcon.intrinsicWidth
-        val intrinsicHeightLeft = swipeLeftIcon.intrinsicHeight
-        val intrinsicWidthLeft = swipeLeftIcon.intrinsicWidth
-
-        val itemTouchHelper = ItemTouchHelper(
-            object : ItemTouchHelper.SimpleCallback(
-                0,
-                ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
-            ) {
-                override fun onMove(
-                    recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder,
-                    target: RecyclerView.ViewHolder
-                ): Boolean {
-                    return false
-                }
-
-                override fun onChildDraw(
-                    c: Canvas,
-                    recyclerView: RecyclerView,
-                    viewHolder: RecyclerView.ViewHolder,
-                    dX: Float,
-                    dY: Float,
-                    actionState: Int,
-                    isCurrentlyActive: Boolean
-                ) {
-                    super.onChildDraw(
-                        c,
-                        recyclerView,
-                        viewHolder,
-                        dX,
-                        dY,
-                        actionState,
-                        isCurrentlyActive
-                    )
-                    val itemView = viewHolder.itemView
-                    val itemHeight = itemView.bottom - itemView.top
-
-                    if (dX < 0) {
-                        background.color =
-                            ContextCompat.getColor(binding.root.context, R.color.color_red)
-                        background.setBounds(
-                            itemView.right + dX.toInt(),
-                            itemView.top,
-                            itemView.right,
-                            itemView.bottom
-                        )
-                        background.draw(c)
-                        val iconTop = itemView.top + (itemHeight - intrinsicHeightRight) / 2
-                        val iconMargin = (itemHeight - intrinsicHeightRight) / 2
-                        val iconLeft = itemView.right - iconMargin - intrinsicWidthRight
-                        val iconRight = itemView.right - iconMargin
-                        val iconBottom = iconTop + intrinsicHeightRight
-                        swipeRightIcon.bounds.set(iconLeft, iconTop, iconRight, iconBottom)
-                        swipeRightIcon.setTint(
-                            ContextCompat.getColor(
-                                binding.root.context,
-                                R.color.color_white
-                            )
-                        )
-                        swipeRightIcon.draw(c)
-                    } else {
-                        background.color =
-                            ContextCompat.getColor(binding.root.context, R.color.color_green)
-                        background.setBounds(
-                            itemView.left + dX.toInt(),
-                            itemView.top,
-                            itemView.left,
-                            itemView.bottom
-                        )
-                        background.draw(c)
-                        val iconTop = itemView.top + (itemHeight - intrinsicHeightLeft) / 2
-                        val iconMargin = (itemHeight - intrinsicHeightLeft) / 2
-                        val iconLeft = itemView.left + iconMargin
-                        val iconRight = itemView.left + iconMargin + intrinsicWidthLeft
-                        val iconBottom = iconTop + intrinsicHeightLeft
-                        swipeLeftIcon.bounds.set(iconLeft, iconTop, iconRight, iconBottom)
-                        swipeLeftIcon.setTint(
-                            ContextCompat.getColor(
-                                binding.root.context,
-                                R.color.color_white
-                            )
-                        )
-                        swipeLeftIcon.draw(c)
-                    }
-                    super.onChildDraw(
-                        c, recyclerView, viewHolder, dX, dY,
-                        actionState, isCurrentlyActive
-                    )
-                }
-
-                override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                    val position = viewHolder.bindingAdapterPosition
-                    if (direction == ItemTouchHelper.LEFT) {
-                        viewModel.removeItem(position)
-                    } else {
-                        viewModel.setCompleted(position, true)
-                    }
+        return ComposeView(requireContext()).apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MyTheme {
+                    TodoItemListData(viewModel)
                 }
             }
-        )
-        itemTouchHelper.attachToRecyclerView(binding.itemsList)
+        }
+    }
 
-        //go to TaskScreen
+    @Composable
+    fun TodoItemListData(viewModel: MainViewModel) {
+        val switchCompletedTasksVisibility = { viewModel.switchCompletedTasksVisibility() }
+        val isCompletedTasksVisible by viewModel.isCompletedTasksVisible.observeAsState(false)
+        val itemsList by viewModel.items.observeAsState(emptyList())
+        val countCompleted by viewModel.count.observeAsState(0)
+        val onRemoveClick = { position: Int -> viewModel.removeItem(position) }
+        val onSetCompleted =
+            { position: Int, isCompleted: Boolean -> viewModel.setCompleted(position, isCompleted) }
+        val operation by viewModel.operation.observeAsState()
+        var items = itemsList
         parentFragmentManager.setFragmentResultListener(
             TaskFragment.RESULT_KEY,
             this
         ) { _, bundle ->
             bundle.getString(TaskFragment.RESULT_DELETE_KEY)?.let { id ->
-                toDoListAdapter.items = viewModel.items.value.orEmpty().filter { it.id != id }
+                items = itemsList.filter { it.id != id }
             }
-
             val newItem: TodoItem? =
                 if (Build.VERSION.SDK_INT >= 33) {
                     bundle.getParcelable(TaskFragment.RESULT_NEW_ITEM_KEY, TodoItem::class.java)
                 } else bundle.getParcelable(TaskFragment.RESULT_NEW_ITEM_KEY)
-            if (newItem != null) toDoListAdapter.items = viewModel.items.value.orEmpty() + newItem
+            if (newItem != null) items = itemsList + newItem
         }
-
-        binding.floatingActionButton.setOnClickListener {
-            findNavController().navigate(MainFragmentDirections.actionMainFragmentToTaskFragment())
+        TodoItemListPresentation(
+            switchCompletedTasksVisibility = switchCompletedTasksVisibility,
+            isCompletedTasksVisible = isCompletedTasksVisible,
+            list = items,
+            countCompleted = countCompleted,
+            onRemoveClick = onRemoveClick,
+            onSetCompleted = onSetCompleted
+        )
+        if (operation == MainViewModel.Operation.LOADING) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                LinearProgressIndicator(Modifier.align(Alignment.Center))
+            }
         }
+    }
 
-        toDoListAdapter.setOnClickListener(
-            object : TodoListAdapter.OnClickListener {
-                override fun onClick(position: Int, model: TodoItem) {
-                    findNavController().navigate(
-                        MainFragmentDirections.actionMainFragmentToTaskFragment(model)
-                    )
-                }
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun TodoItemListPresentation(
+        switchCompletedTasksVisibility: () -> Unit,
+        isCompletedTasksVisible: Boolean,
+        list: List<TodoItem>,
+        countCompleted: Int,
+        onRemoveClick: (position: Int) -> Unit,
+        onSetCompleted: (position: Int, isCompleted: Boolean) -> Unit
+    ) {
+        val scrollBehavior =
+            TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+        Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+            topBar = {
+                MediumTopAppBar(
+                    title = {
+                        Column(Modifier.wrapContentHeight()) {
+                            Text(stringResource(R.string.large_title))
+                            Text(
+                                text = stringResource(
+                                    id = R.string.executed_title,
+                                    countCompleted
+                                ),
 
-                override fun onCheckChanged(position: Int, model: TodoItem, isChecked: Boolean) {
-                    viewModel.setCompleted(position, isChecked)
+                                fontSize = 16.sp,
+                                color = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = switchCompletedTasksVisibility) {
+                            if (isCompletedTasksVisible) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.visibility),
+                                    contentDescription = stringResource(id = R.string.visibility_button),
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            } else Icon(
+                                painter = painterResource(id = R.drawable.visibility_off),
+                                contentDescription = stringResource(id = R.string.visibility_button),
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                    expandedHeight = 130.dp
+                )
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = {
+                    findNavController().navigate(MainFragmentDirections.actionMainFragmentToTaskFragment())
+                }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add")
                 }
             }
         )
-        //progressBar
-        val progressBarDialog = ProgressDialog(binding.root.context).apply {
-            setCancelable(false)
-        }
-        viewModel.operation.observe(viewLifecycleOwner) {
-            if (it == MainViewModel.Operation.LOADING) {
-                progressBarDialog.show()
-            } else {
-                progressBarDialog.dismiss()
+        { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(list.size, null, itemContent = { index ->
+                    ItemCard(
+                        list[index],
+                        onCheckedChange = { onSetCompleted(index, !list[index].isCompleted) },
+                        onRemove = { onRemoveClick(index) },
+                        onClick = {
+                            findNavController().navigate(
+                                MainFragmentDirections.actionMainFragmentToTaskFragment(
+                                    list[index]
+                                )
+                            )
+                        },
+                        index = index
+                    )
+                })
             }
         }
-        return binding.root
     }
 
+    @Preview
+    @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
+    @Composable
+    fun TodoItemListPreview() {
+        MyTheme {
+            TodoItemListPresentation(
+                switchCompletedTasksVisibility = { },
+                isCompletedTasksVisible = true,
+                list = listOf(
+                    TodoItem(
+                        "11111",
+                        "1111111",
+                        TodoItem.Priority.LOW,
+                        false,
+                        LocalDate.now(),
+                        null,
+                        null
+                    ),
+                    TodoItem(
+                        "11112",
+                        "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
+                        TodoItem.Priority.LOW,
+                        false,
+                        LocalDate.now(),
+                        LocalDate(1996, 4, 4),
+                        null
+                    ),
+                    TodoItem(
+                        "11113",
+                        "Jetpack Compose",
+                        TodoItem.Priority.HIGH,
+                        true,
+                        LocalDate.now(),
+                        null,
+                        null
+                    ),
+                    TodoItem(
+                        "11114",
+                        "View в Android",
+                        TodoItem.Priority.HIGH,
+                        false,
+                        LocalDate.now(),
+                        LocalDate(1996, 4, 4),
+                        null
+                    ),
+                    TodoItem(
+                        "11115",
+                        "Многопоточность",
+                        TodoItem.Priority.LOW,
+                        true,
+                        LocalDate.now(),
+                        LocalDate(1996, 4, 4),
+                        null
+                    )
+                ),
+                countCompleted = 2,
+                onRemoveClick = {},
+                onSetCompleted = { _, _ -> }
+            )
+        }
+
+    }
 }
+

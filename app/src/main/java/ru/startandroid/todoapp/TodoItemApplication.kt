@@ -7,7 +7,6 @@ import kotlinx.serialization.json.Json
 import okhttp3.MediaType
 import org.kodein.di.DI
 import org.kodein.di.DIAware
-import org.kodein.di.bindProvider
 import org.kodein.di.bindSingleton
 import org.kodein.di.instance
 import retrofit2.Retrofit
@@ -41,7 +40,7 @@ class TodoItemApplication : Application(), DIAware {
     override val di by DI.lazy {
         import(dbModule("database.db"))
         import(apiModule("http://192.168.1.20:8080/"))
-        bindProvider<TodoItemsRepository> { TodoItemsRepository(instance(), instance()) }
+        bindSingleton<TodoItemsRepository> { TodoItemsRepository(instance(), instance()) }
     }
 
 }
