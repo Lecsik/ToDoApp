@@ -2,6 +2,7 @@ package ru.startandroid.todoapp.presentation.main
 
 
 import android.content.res.Configuration
+import android.os.Parcelable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,58 +39,55 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.parcelize.Parcelize
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.presentation.task.TaskScreen
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
-class MainScreen : Screen {
+@Parcelize
+class MainScreen : Screen, Parcelable {
     @Composable
     override fun Content() {
         val viewModel = viewModel<MainViewModel>()
-        val navigator = LocalNavigator.currentOrThrow
-        val switchCompletedTasksVisibility = { viewModel.switchCompletedTasksVisibility() }
         val isCompletedTasksVisible by viewModel.isCompletedTasksVisible.observeAsState(false)
-        val itemsList by viewModel.items.observeAsState(emptyList())
+        val switchCompletedTasksVisibility = { viewModel.switchCompletedTasksVisibility() }
         val countCompleted by viewModel.count.observeAsState(0)
+        val itemsList by viewModel.items.observeAsState(emptyList())
         val onRemoveClick = { position: Int -> viewModel.removeItem(position) }
         val onSetCompleted =
             { position: Int, isCompleted: Boolean -> viewModel.setCompleted(position, isCompleted) }
         val operation by viewModel.operation.observeAsState()
-        val items = itemsList
-        MyTheme {
-            TodoItemListPresentation(
-                switchCompletedTasksVisibility = switchCompletedTasksVisibility,
-                isCompletedTasksVisible = isCompletedTasksVisible,
-                list = items,
-                countCompleted = countCompleted,
-                onRemoveClick = onRemoveClick,
-                onSetCompleted = onSetCompleted,
-                navigator = navigator
-            )
-            if (operation == MainViewModel.Operation.LOADING) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LinearProgressIndicator(Modifier.align(Alignment.Center))
-                }
-            }
 
-            if (operation == MainViewModel.Operation.LOADING) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LinearProgressIndicator(Modifier.align(Alignment.Center))
-                }
+        TodoItemListPresentation(
+            isCompletedTasksVisible = isCompletedTasksVisible,
+            onCompletedTasksVisibilityClick = switchCompletedTasksVisibility,
+            countCompleted = countCompleted,
+            list = itemsList,
+            onRemoveClick = onRemoveClick,
+            onSetCompleted = onSetCompleted
+        )
+        if (operation == MainViewModel.Operation.LOADING) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                LinearProgressIndicator(Modifier.align(Alignment.Center))
+            }
+        }
+
+        if (operation == MainViewModel.Operation.LOADING) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                LinearProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
     }
@@ -98,14 +96,14 @@ class MainScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TodoItemListPresentation(
-    switchCompletedTasksVisibility: () -> Unit,
     isCompletedTasksVisible: Boolean,
-    list: List<TodoItem>,
+    onCompletedTasksVisibilityClick: () -> Unit,
     countCompleted: Int,
+    list: List<TodoItem>,
     onRemoveClick: (position: Int) -> Unit,
-    onSetCompleted: (position: Int, isCompleted: Boolean) -> Unit,
-    navigator: Navigator
+    onSetCompleted: (position: Int, isCompleted: Boolean) -> Unit
 ) {
+    val navigator = LocalNavigator.currentOrThrow
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
     Scaffold(
@@ -127,7 +125,7 @@ fun TodoItemListPresentation(
                     }
                 },
                 actions = {
-                    IconButton(onClick = switchCompletedTasksVisibility) {
+                    IconButton(onClick = onCompletedTasksVisibilityClick) {
                         if (isCompletedTasksVisible) {
                             Icon(
                                 painter = painterResource(id = R.drawable.visibility),
@@ -182,8 +180,9 @@ fun TodoItemListPresentation(
 fun TodoItemListPreview() {
     MyTheme {
         TodoItemListPresentation(
-            switchCompletedTasksVisibility = { },
             isCompletedTasksVisible = true,
+            onCompletedTasksVisibilityClick = { },
+            countCompleted = 2,
             list = listOf(
                 TodoItem(
                     "11111",
@@ -231,10 +230,8 @@ fun TodoItemListPreview() {
                     null
                 )
             ),
-            countCompleted = 2,
             onRemoveClick = {},
-            onSetCompleted = { _, _ -> },
-            navigator = LocalNavigator.currentOrThrow
+            onSetCompleted = { _, _ -> }
         )
     }
 

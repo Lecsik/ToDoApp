@@ -4,6 +4,7 @@ plugins {
     id("com.google.devtools.ksp")
     id("androidx.navigation.safeargs.kotlin")
     kotlin("plugin.serialization")
+    id("kotlin-parcelize")
 }
 
 android {

@@ -1,5 +1,6 @@
 package ru.startandroid.todoapp.presentation.task
 
+import android.os.Parcelable
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -41,6 +42,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -59,59 +61,60 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import kotlinx.parcelize.Parcelize
 import org.joda.time.DateTimeZone
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
-class TaskScreen(private val item: TodoItem?) : Screen {
+@Parcelize
+class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
 
     @Composable
     override fun Content() {
         val viewModel = viewModel<TaskViewModel>()
         val navigator = LocalNavigator.currentOrThrow
-        item?.let { viewModel.setExistingItem(it) }
-
-        val priority by viewModel.priority.observeAsState(TodoItem.Priority.NONE)
+        LaunchedEffect(Unit) {
+            item?.let { viewModel.setExistingItem(it) }
+        }
         val description by viewModel.description.observeAsState("")
         val dueDate by viewModel.dueDate.observeAsState()
+        val priority by viewModel.priority.observeAsState(TodoItem.Priority.NONE)
         val done by viewModel.done.observeAsState(false)
         val isItemExists by viewModel.isItemExists.observeAsState(false)
         val operation by viewModel.operation.observeAsState()
 
-        MyTheme {
-            TaskScreenPresentation(
-                onBack = { navigator.pop() },
-                onDelete = {
-                    viewModel.remove()
-                },
-                priority = priority,
-                description = description,
-                onDescription = { text -> viewModel.description.value = text },
-                dueDate = dueDate,
-                onChangeDueDate = { date: LocalDate? -> viewModel.dueDate.value = date },
-                onPriorityButton = { priority: TodoItem.Priority ->
-                    viewModel.priority.value = priority
-                },
-                isItemExists = isItemExists,
-                onSaveItem = {
-                    viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
-                        viewModel.save()
-                    }
-                })
-            if (done) {
-                navigator.pop()
-            }
-            if (operation == TaskViewModel.Operation.LOADING) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LinearProgressIndicator(Modifier.align(Alignment.Center))
+        TaskScreenPresentation(
+            onBackClick = { navigator.pop() },
+            isItemExists = isItemExists,
+            onDeleteClick = {
+                viewModel.remove()
+            },
+            description = description,
+            onDescriptionChange = { text -> viewModel.description.value = text },
+            dueDate = dueDate,
+            onDueDateChange = { date: LocalDate? -> viewModel.dueDate.value = date },
+            priority = priority,
+            onPriorityChange = { priorityEntry: TodoItem.Priority ->
+                viewModel.priority.value = priorityEntry
+            },
+            onSave = {
+                viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
+                    viewModel.save()
                 }
+            })
+        if (done) {
+            navigator.pop()
+        }
+        if (operation == TaskViewModel.Operation.LOADING) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                contentAlignment = Alignment.Center
+            ) {
+                LinearProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
     }
@@ -120,19 +123,18 @@ class TaskScreen(private val item: TodoItem?) : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TaskScreenPresentation(
-    onBack: () -> Unit,
-    onDelete: () -> Unit,
-    priority: TodoItem.Priority,
-    description: String,
-    onDescription: (String) -> Unit,
-    dueDate: LocalDate?,
-    onChangeDueDate: (LocalDate?) -> Unit,
-    onPriorityButton: (TodoItem.Priority) -> Unit,
+    onBackClick: () -> Unit,
     isItemExists: Boolean,
-    onSaveItem: () -> Unit
+    onDeleteClick: () -> Unit,
+    description: String,
+    onDescriptionChange: (String) -> Unit,
+    dueDate: LocalDate?,
+    onDueDateChange: (LocalDate?) -> Unit,
+    priority: TodoItem.Priority,
+    onPriorityChange: (TodoItem.Priority) -> Unit,
+    onSave: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    var state by remember { mutableStateOf(description) }
     var mDisplayMenu by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -149,7 +151,7 @@ fun TaskScreenPresentation(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(id = R.string.back_button)
@@ -183,7 +185,7 @@ fun TaskScreenPresentation(
                                         Text(stringResource(id = R.string.delete_label))
                                     }
                                 },
-                                onClick = onDelete,
+                                onClick = onDeleteClick,
                                 modifier = Modifier.wrapContentSize()
                             )
                         }
@@ -214,11 +216,8 @@ fun TaskScreenPresentation(
                     .verticalScroll(scrollState)
             ) {
                 TextField(
-                    value = state,
-                    onValueChange = {
-                        state = it
-                        onDescription(state)
-                    },
+                    value = description,
+                    onValueChange = onDescriptionChange,
                     minLines = 5,
                     maxLines = 10,
                     placeholder = { Text(stringResource(id = R.string.description_text)) },
@@ -239,7 +238,7 @@ fun TaskScreenPresentation(
                     .fillMaxWidth()
             ) {
                 var showDatePicker by remember { mutableStateOf(false) }
-                val deadline = rememberDatePickerState(
+                val datePickerState = rememberDatePickerState(
                     initialSelectedDateMillis = dueDate?.toDateTimeAtStartOfDay(DateTimeZone.UTC)?.millis
                 )
                 Text(
@@ -250,12 +249,8 @@ fun TaskScreenPresentation(
                     onClick = { showDatePicker = true }
                 ) {
                     Text(
-                        text = if (dueDate == null) {
-                            stringResource(id = R.string.null_date)
-                        } else LocalDate(
-                            deadline.selectedDateMillis,
-                            DateTimeZone.UTC
-                        ).toString("dd MMM YYYY")
+                        text = dueDate?.toString("dd MMM YYYY")
+                            ?: stringResource(id = R.string.null_date)
                     )
                 }
                 if (showDatePicker) {
@@ -266,7 +261,7 @@ fun TaskScreenPresentation(
                                 if (dueDate != null) {
                                     TextButton(
                                         onClick = {
-                                            onChangeDueDate(null)
+                                            onDueDateChange(null)
                                             showDatePicker = false
                                         },
                                         Modifier.padding(horizontal = 12.dp)
@@ -285,9 +280,9 @@ fun TaskScreenPresentation(
 
                                 TextButton(
                                     onClick = {
-                                        onChangeDueDate(
+                                        onDueDateChange(
                                             LocalDate(
-                                                deadline.selectedDateMillis,
+                                                datePickerState.selectedDateMillis,
                                                 DateTimeZone.UTC
                                             )
                                         )
@@ -299,7 +294,7 @@ fun TaskScreenPresentation(
                             }
                         }
                     ) {
-                        DatePicker(state = deadline)
+                        DatePicker(state = datePickerState)
                     }
                 }
             }
@@ -316,7 +311,7 @@ fun TaskScreenPresentation(
                         }
                     )
                     OutlinedButton(
-                        onClick = { onPriorityButton(entry) },
+                        onClick = { onPriorityChange(entry) },
                         Modifier
                             .weight(1.0f)
                             .padding(end = 8.dp),
@@ -332,11 +327,11 @@ fun TaskScreenPresentation(
             }
             Spacer(Modifier.weight(1.0f))
             Button(
-                onClick = onSaveItem,
+                onClick = onSave,
                 Modifier
                     .padding(horizontal = 8.dp, vertical = 20.dp)
                     .fillMaxWidth(),
-                enabled = state.isNotBlank()
+                enabled = description.isNotBlank()
             ) {
                 Text(text = stringResource(id = R.string.save_button))
             }
@@ -351,8 +346,8 @@ fun TaskScreenPresentationPreview() {
     MyTheme {
         TaskScreenPresentation(
             {},
+            true,
             {},
-            TodoItem.Priority.NONE,
             description = "description,description,descriptiondescription,description," +
                     "description,description,description,description,description," +
                     "description,descriptiondescription,description,description,description," +
@@ -370,8 +365,8 @@ fun TaskScreenPresentationPreview() {
             {},
             LocalDate.now(),
             {},
+            TodoItem.Priority.NONE,
             {},
-            true,
             {}
         )
     }
@@ -383,14 +378,14 @@ fun TaskScreenPresentationPreviewEmpty() {
     MyTheme {
         TaskScreenPresentation(
             {},
+            false,
             {},
-            TodoItem.Priority.HIGH,
             description = "",
             {},
             null,
             {},
+            TodoItem.Priority.HIGH,
             {},
-            false,
             {}
         )
     }

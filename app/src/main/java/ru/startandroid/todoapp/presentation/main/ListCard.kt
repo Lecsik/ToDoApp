@@ -155,7 +155,6 @@ fun DeleteAlertDialog(
     )
 }
 
-
 @Preview
 @Composable
 fun ListCardPreview() {
