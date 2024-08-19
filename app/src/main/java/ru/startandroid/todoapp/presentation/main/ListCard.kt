@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.models.TodoItem
@@ -135,7 +136,7 @@ fun DeleteAlertDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismissRequest,
-        title = { Text(dialogTitle) },
+        title = { Text(dialogTitle, lineHeight = 30.sp) },
         text = { Text(dialogText) },
         confirmButton = {
             TextButton(
@@ -153,7 +154,6 @@ fun DeleteAlertDialog(
         }
     )
 }
-
 
 @Preview
 @Composable
