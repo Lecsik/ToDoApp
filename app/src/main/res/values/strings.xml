@@ -1,26 +1,24 @@
 <resources>
     <string name="app_name">ToDoApp</string>
-    <string name="large_title">Мои дела</string>
-    <string name="executed_title">Выполнено – %1$d</string>
-    <string name="visibility_button">Видимость</string>
-    <string name="close_button">Закрыть</string>
-    <string name="cancel_label">Отмена</string>
-    <string name="delete_dialog_title">Удалить эту задачу?</string>
-    <string name="delete_dialog_text">Вы действительно хотите удалить выбранную задачу?</string>
-
-    <string name="task_screen_title">Задача</string>
-    <string name="back_button">Назад</string>
-    <string name="menu_buton">Меню</string>
-    <string name="save_button">Сохранить</string>
-    <string name="description_text">Что надо сделать…</string>
-    <string name="importance_label"><font size="42">Важность</font></string>
-    <string name="deadline_label">Сделать до </string>
-    <string name="null_date">Без даты</string>
-
-    <string name="delete_label">Удалить</string>
-    <string-array name="priorityListItems">
-        <item>Неважно</item>
-        <item>Низкий</item>
-        <item>Высокий</item>
+    <string name="large_title">My tasks</string>
+    <string name="executed_title">Complete – %1$d</string>
+    <string name="visibility_button">Visibility</string>
+    <string name="close_button">Close</string>
+    <string name="cancel_label">Cancel</string>
+    <string name="delete_dialog_title">Delete Task?</string>
+    <string name="delete_dialog_text">Are you sure you want to delete this task?</string>
+    <string name="task_screen_title">Task</string>
+    <string name="back_button">Back</string>
+    <string name="menu_buton">Menu</string>
+    <string name="save_button">Save</string>
+    <string name="description_text">What needs to be done…</string>
+    <string name="importance_label">Importance</string>
+    <string name="deadline_label">Due</string>
+    <string name="null_date">w/o date</string>
+    <string name="delete_label">Delete</string>
+    <string-array name="priority_list_items">
+        <item>Normal</item>
+        <item>Low</item>
+        <item>Important</item>
     </string-array>
 </resources>
