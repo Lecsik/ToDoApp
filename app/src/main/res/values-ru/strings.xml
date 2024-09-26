@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ToDoApp</string>
+    <string name="large_title">Мои дела</string>
+    <string name="executed_title">Выполнено – %1$d</string>
+    <string name="visibility_button">Видимость</string>
+    <string name="close_button">Закрыть</string>
+    <string name="cancel_label">Отмена</string>
+    <string name="delete_dialog_title">Удалить эту задачу?</string>
+    <string name="delete_dialog_text">Вы действительно хотите удалить выбранную задачу?</string>
+    <string name="task_screen_title">Задача</string>
+    <string name="back_button">Назад</string>
+    <string name="menu_buton">Меню</string>
+    <string name="save_button">Сохранить</string>
+    <string name="description_text">Что надо сделать…</string>
+    <string name="importance_label">Важность</string>
+    <string name="deadline_label">"Сделать до "</string>
+    <string name="null_date">Без даты</string>
+    <string name="delete_label">Удалить</string>
+    <string-array name="priority_list_items">
+        <item>Неважно</item>
+        <item>Низкий</item>
+        <item>Высокий</item>
+    </string-array>
+</resources>
