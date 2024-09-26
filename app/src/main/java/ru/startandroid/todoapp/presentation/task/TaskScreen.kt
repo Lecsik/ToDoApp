@@ -139,10 +139,6 @@ fun TaskScreenPresentation(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
                 title = {
                     Text(
                         stringResource(id = R.string.task_screen_title),
@@ -191,8 +187,11 @@ fun TaskScreenPresentation(
                         }
                     }
                 },
-
-                )
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.secondary,
+                ),
+            )
         },
     ) { innerPadding ->
         val colorPriority = when (priority) {
@@ -321,7 +320,7 @@ fun TaskScreenPresentation(
                         ),
                         border = BorderStroke(2.dp, contentColor)
                     ) {
-                        Text(text = stringArrayResource(id = R.array.priorityListItems)[index])
+                        Text(text = stringArrayResource(id = R.array.priority_list_items)[index])
                     }
                 }
             }
