@@ -139,8 +139,9 @@ fun TodoItemListPresentation(
                         )
                     }
                 },
+                expandedHeight = 130.dp,
+                colors = TopAppBarDefaults.topAppBarColors(scrolledContainerColor = MaterialTheme.colorScheme.primaryContainer),
                 scrollBehavior = scrollBehavior,
-                expandedHeight = 130.dp
             )
         },
         floatingActionButton = {

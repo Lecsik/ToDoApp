@@ -6,8 +6,6 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
@@ -22,22 +20,10 @@ fun Application.configureRouting() {
                 call.respond(Repository().getAllItems())
             }
 
-            delete("{id?}") {
-                val id =
-                    call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
-                Repository().deleteItem(id)
-                call.respondText("", status = HttpStatusCode.Accepted)
-            }
-
-            get("{id?}") {
-                val id = call.parameters["id"] ?: return@get call.respond(HttpStatusCode.BadRequest)
-                call.respond(Repository().getItem(id))
-            }
-
-            post {
+            post("/add") {
                 try {
-                    val item = call.receive<TodoItem>()
-                    Repository().addItem(item)
+                    val list = call.receive<List<TodoItem>>()
+                    Repository().setAllItems(list)
                     call.respond(HttpStatusCode.NoContent)
                 } catch (ex: IllegalStateException) {
                     call.respond(HttpStatusCode.BadRequest)
