@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace = "ru.startandroid.todoapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "ru.startandroid.todoapp"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -46,43 +46,45 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.appcompat:appcompat:1.7.0")
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.0")
     implementation("joda-time:joda-time:2.13.0")
     implementation("com.wdullaer:swipeactionadapter:2.1.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.6")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.6")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.6")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation("androidx.room:room-runtime:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.8.1")
-    implementation("androidx.navigation:navigation-ui-ktx:2.8.1")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.8.3")
+    implementation("androidx.navigation:navigation-ui-ktx:2.8.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
     implementation("org.kodein.di:kodein-di:7.22.0")
     implementation("org.kodein.di:kodein-di-framework-android-x-viewmodel:7.22.0")
 
-    implementation("androidx.compose.ui:ui:1.7.2")
-    implementation("androidx.compose.runtime:runtime:1.7.2")
-    implementation("androidx.activity:activity-compose:1.9.2")
-    implementation(platform("androidx.compose:compose-bom:2024.09.02"))
+    implementation("androidx.compose.ui:ui:1.7.5")
+    implementation("androidx.compose.runtime:runtime:1.7.5")
+    implementation("androidx.activity:activity-compose:1.9.3")
+    implementation(platform("androidx.compose:compose-bom:2024.10.01"))
     implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.7.2")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.7.2")
-    implementation("androidx.compose.runtime:runtime-livedata:1.7.2")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.7.5")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.7.5")
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.5")
 
-    implementation("androidx.compose.material3:material3:1.3.0")
-    implementation("androidx.compose.material3:material3-window-size-class:1.3.0")
-    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.3.0")
+    implementation("androidx.compose.material3:material3:1.3.1")
+    implementation("androidx.compose.material3:material3-window-size-class:1.3.1")
+    implementation("androidx.compose.material3:material3-adaptive-navigation-suite:1.3.1")
 
-    implementation("cafe.adriel.voyager:voyager-navigator:1.1.0-beta02")
+    implementation("cafe.adriel.voyager:voyager-navigator:1.1.0-beta03")
+
+    implementation("androidx.work:work-runtime:2.10.0")
 }
