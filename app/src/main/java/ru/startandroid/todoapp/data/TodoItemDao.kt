@@ -18,6 +18,9 @@ interface TodoItemDao {
     suspend fun deleteAllTasks()
 
     @Upsert
+    suspend fun upsert(todoItems: List<TodoItem>)
+
+    @Upsert
     suspend fun upsert(todoItem: TodoItem)
 
     @Insert
