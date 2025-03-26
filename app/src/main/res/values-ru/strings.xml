@@ -10,7 +10,7 @@
     <string name="delete_dialog_text">Вы действительно хотите удалить выбранную задачу?</string>
     <string name="task_screen_title">Задача</string>
     <string name="back_button">Назад</string>
-    <string name="menu_buton">Меню</string>
+    <string name="menu_button">Меню</string>
     <string name="save_button">Сохранить</string>
     <string name="description_text">Что надо сделать…</string>
     <string name="importance_label">Важность</string>
@@ -22,4 +22,21 @@
         <item>Низкий</item>
         <item>Высокий</item>
     </string-array>
+    <string name="authorization_welcome">Привет!</string>
+    <string name="login">Логин</string>
+    <string name="password">Пароль</string>
+    <string name="log_in">Авторизоваться</string>
+    <string name="no_account">"У вас нет учетной записи?  "</string>
+    <string name="sign_up">Зарегистрироваться</string>
+    <string name="sign_up_button">Создать аккаунт</string>
+    <string name="registration_welcome">Добро Пожаловать!</string>
+    <string name="have_account">"Уже есть учетная запись?  "</string>
+    <string name="authorization_error">Неправильный логин или пароль</string>
+    <string name="empty_login">Логин не может быть пустым</string>
+    <string name="registration_error">Пользователь уже существует</string>
+    <string name="validation_password_error">Введите не менее 8 символов</string>
+    <string name="password_match_error">Пароли не совпадают</string>
+    <string name="exit_app">Выйти</string>
+    <string name="exit_dialog_title">Выйти из приложения?</string>
+    <string name="exit_dialog_text">Вы уверены, что хотите выйти из приложения?</string>
 </resources>
