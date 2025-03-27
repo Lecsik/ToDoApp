@@ -8,12 +8,21 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -23,14 +32,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +60,7 @@ import kotlinx.parcelize.Parcelize
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.models.TodoItem
+import ru.startandroid.todoapp.presentation.login.LoginScreen
 import ru.startandroid.todoapp.presentation.task.TaskScreen
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
@@ -56,35 +73,43 @@ class MainScreen : Screen, Parcelable {
         val switchCompletedTasksVisibility = { viewModel.switchCompletedTasksVisibility() }
         val countCompleted by viewModel.count.observeAsState(0)
         val itemsList by viewModel.items.observeAsState(emptyList())
+        val refresh by viewModel.refresh.observeAsState(false)
+        val onPullRefresh = { viewModel.onPullRefresh() }
         val onRemoveClick = { position: Int -> viewModel.removeItem(position) }
         val onSetCompleted =
             { position: Int, isCompleted: Boolean -> viewModel.setCompleted(position, isCompleted) }
         val operation by viewModel.operation.observeAsState()
+        val navigator = LocalNavigator.currentOrThrow
+
+        val exit = {
+            viewModel.exit()
+            navigator.replace(LoginScreen())
+        }
+
+        LaunchedEffect(Unit) {
+            viewModel.refreshItems()
+        }
 
         TodoItemListPresentation(
+            exit = exit,
             isCompletedTasksVisible = isCompletedTasksVisible,
             onCompletedTasksVisibilityClick = switchCompletedTasksVisibility,
             countCompleted = countCompleted,
             list = itemsList,
+            refresh = refresh,
+            onPullRefresh = onPullRefresh,
             onRemoveClick = onRemoveClick,
-            onSetCompleted = onSetCompleted
+            onSetCompleted = onSetCompleted,
+            onItemAddClick = { navigator.push(TaskScreen(null)) },
+            onItemClick = { navigator.push(TaskScreen(it)) }
         )
         if (operation == MainViewModel.Operation.LOADING) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
-                contentAlignment = Alignment.Center
-            ) {
-                LinearProgressIndicator(Modifier.align(Alignment.Center))
-            }
-        }
-
-        if (operation == MainViewModel.Operation.LOADING) {
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
+                    .background(
+                        color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 LinearProgressIndicator(Modifier.align(Alignment.Center))
@@ -95,17 +120,23 @@ class MainScreen : Screen, Parcelable {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TodoItemListPresentation(
+private fun TodoItemListPresentation(
+    exit: () -> Unit,
     isCompletedTasksVisible: Boolean,
     onCompletedTasksVisibilityClick: () -> Unit,
     countCompleted: Int,
     list: List<TodoItem>,
+    refresh: Boolean,
+    onPullRefresh: () -> Unit,
     onRemoveClick: (position: Int) -> Unit,
-    onSetCompleted: (position: Int, isCompleted: Boolean) -> Unit
+    onSetCompleted: (position: Int, isCompleted: Boolean) -> Unit,
+    onItemAddClick: () -> Unit,
+    onItemClick: (TodoItem) -> Unit,
 ) {
-    val navigator = LocalNavigator.currentOrThrow
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    var mDisplayMenu by remember { mutableStateOf(false) }
+    var openAlertDialog by remember { mutableStateOf(false) }
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
@@ -125,7 +156,9 @@ fun TodoItemListPresentation(
                     }
                 },
                 actions = {
-                    IconButton(onClick = onCompletedTasksVisibilityClick) {
+                    IconButton(
+                        onClick = onCompletedTasksVisibilityClick,
+                    ) {
                         if (isCompletedTasksVisible) {
                             Icon(
                                 painter = painterResource(id = R.drawable.visibility),
@@ -138,6 +171,58 @@ fun TodoItemListPresentation(
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
+                    IconButton(onClick = { mDisplayMenu = !mDisplayMenu }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = stringResource(id = R.string.menu_button),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = mDisplayMenu,
+                        onDismissRequest = { mDisplayMenu = false }) {
+                        DropdownMenuItem(
+                            text = {
+                                Row {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                        contentDescription = stringResource(R.string.exit_app),
+                                        tint = colorResource(id = R.color.delete)
+                                    )
+                                    Spacer(modifier = Modifier.weight(1.0f))
+                                    Text(stringResource(id = R.string.exit_app))
+                                }
+                            },
+                            onClick = { openAlertDialog = true },
+                            modifier = Modifier.wrapContentSize()
+                        )
+                    }
+                    if (openAlertDialog) {
+                        AlertDialog(
+                            onDismissRequest = { openAlertDialog = false },
+                            title = {
+                                Text(
+                                    stringResource(R.string.exit_dialog_title),
+                                    lineHeight = 30.sp
+                                )
+                            },
+                            text = { Text(stringResource(R.string.exit_dialog_text)) },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = exit
+                                ) {
+                                    Text(stringResource(id = R.string.exit_app))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(
+                                    onClick = { openAlertDialog = false }
+                                ) {
+                                    Text(stringResource(id = R.string.cancel_label))
+                                }
+                            }
+                        )
+                    }
                 },
                 expandedHeight = 130.dp,
                 colors = TopAppBarDefaults.topAppBarColors(scrolledContainerColor = MaterialTheme.colorScheme.primaryContainer),
@@ -145,42 +230,48 @@ fun TodoItemListPresentation(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                navigator.push(TaskScreen(null))
-            }) {
+            FloatingActionButton(
+                shape = RoundedCornerShape(16.dp),
+                onClick = onItemAddClick
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Add")
             }
         }
     )
     { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        PullToRefreshBox(
+            isRefreshing = refresh,
+            onRefresh = onPullRefresh,
+            modifier = Modifier.padding(innerPadding),
         ) {
-            items(list.size, null, itemContent = { index ->
-                ItemCard(
-                    list[index],
-                    onCheckedChange = { onSetCompleted(index, !list[index].isCompleted) },
-                    onRemove = { onRemoveClick(index) },
-                    onClick = {
-                        navigator.push(TaskScreen(list[index]))
-                    },
-                    index = index
-                )
-            })
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(list.size, null, itemContent = { index ->
+                    ItemCard(
+                        list[index],
+                        onCheckedChange = { onSetCompleted(index, !list[index].isCompleted) },
+                        onRemove = { onRemoveClick(index) },
+                        onClick = { onItemClick(list[index]) },
+                        index = index
+                    )
+                })
+            }
         }
+
     }
 }
 
 @Preview
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-fun TodoItemListPreview() {
+private fun TodoItemListPreview() {
     MyTheme {
         TodoItemListPresentation(
+            exit = {},
             isCompletedTasksVisible = true,
             onCompletedTasksVisibilityClick = { },
             countCompleted = 2,
@@ -231,8 +322,12 @@ fun TodoItemListPreview() {
                     null
                 )
             ),
+            false,
+            onPullRefresh = {},
             onRemoveClick = {},
-            onSetCompleted = { _, _ -> }
+            onSetCompleted = { _, _ -> },
+            onItemAddClick = {},
+            onItemClick = {}
         )
     }
 

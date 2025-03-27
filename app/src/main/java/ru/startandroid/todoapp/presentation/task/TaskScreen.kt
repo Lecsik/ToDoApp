@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -103,7 +105,9 @@ class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
                 viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
                     viewModel.save()
                 }
-            })
+            }
+        )
+
         if (done) {
             navigator.pop()
         }
@@ -161,7 +165,7 @@ fun TaskScreenPresentation(
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.MoreVert,
-                                contentDescription = stringResource(id = R.string.menu_buton)
+                                contentDescription = stringResource(id = R.string.menu_button)
                             )
                         }
                         DropdownMenu(
@@ -193,6 +197,7 @@ fun TaskScreenPresentation(
                 ),
             )
         },
+        modifier = Modifier.imePadding()
     ) { innerPadding ->
         val colorPriority = when (priority) {
             TodoItem.Priority.NONE -> colorResource(id = R.color.priority_none)
@@ -207,12 +212,13 @@ fun TaskScreenPresentation(
         ) {
             Spacer(modifier = Modifier.height(20.dp))
             OutlinedCard(
-                border = BorderStroke(2.dp, colorPriority),
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .wrapContentHeight()
                     .fillMaxWidth()
-                    .verticalScroll(scrollState)
+                    .verticalScroll(scrollState),
+                shape = RoundedCornerShape(16.dp),
+                border = BorderStroke(2.dp, colorPriority),
             ) {
                 TextField(
                     value = description,
@@ -314,6 +320,7 @@ fun TaskScreenPresentation(
                         Modifier
                             .weight(1.0f)
                             .padding(end = 8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.outlinedButtonColors(
                             if (priority == entry) colorPriority else MaterialTheme.colorScheme.background,
                             if (priority == entry) Color.White else contentColor
@@ -330,7 +337,8 @@ fun TaskScreenPresentation(
                 Modifier
                     .padding(horizontal = 8.dp, vertical = 20.dp)
                     .fillMaxWidth(),
-                enabled = description.isNotBlank()
+                enabled = description.isNotBlank(),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(text = stringResource(id = R.string.save_button))
             }

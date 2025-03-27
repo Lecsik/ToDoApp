@@ -9,7 +9,7 @@
     <string name="delete_dialog_text">Are you sure you want to delete this task?</string>
     <string name="task_screen_title">Task</string>
     <string name="back_button">Back</string>
-    <string name="menu_buton">Menu</string>
+    <string name="menu_button">Menu</string>
     <string name="save_button">Save</string>
     <string name="description_text">What needs to be done…</string>
     <string name="importance_label">Importance</string>
@@ -21,4 +21,22 @@
         <item>Low</item>
         <item>Important</item>
     </string-array>
+    <string name="authorization_welcome">Hello Again!</string>
+    <string name="login">Login</string>
+    <string name="password">Password</string>
+    <string name="log_in">Log In</string>
+    <string name="no_account">"Don't have an account?  "</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="sign_up_button">Register</string>
+    <string name="registration_welcome">Welcome!</string>
+    <string name="have_account">"Already have an account?  "</string>
+    <string name="authorization_error">Incorrect login or password</string>
+    <string name="empty_login">Login cannot be empty</string>
+    <string name="registration_error">User already exists</string>
+    <string name="validation_password_error">Enter at least 8 characters</string>
+    <string name="password_match_error">Passwords do not match</string>
+    <string name="exit_app">Exit</string>
+    <string name="exit_dialog_title">Exit the app?</string>
+    <string name="exit_dialog_text">Are you sure you want to exit the app?</string>
+
 </resources>

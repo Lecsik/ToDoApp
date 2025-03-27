@@ -10,15 +10,20 @@ class PreferencesRepository(
 
     companion object {
         const val FILE_NAME = "Preferences_Store"
-        const val PREFERENCE_NAME = "isInitialized"
+
+        const val PREFERENCE_TOKEN = "userToken"
     }
 
     private val sharedPreferences: SharedPreferences =
         context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE)
 
-    var isInitialized: Boolean
-        get() = sharedPreferences.getBoolean(PREFERENCE_NAME, false)
+    var userToken: String?
+        get() = sharedPreferences.getString(PREFERENCE_TOKEN, null)
         set(value) {
-            sharedPreferences.edit { putBoolean(PREFERENCE_NAME, value) }
+            sharedPreferences.edit { putString(PREFERENCE_TOKEN, value) }
         }
+
+    fun clear() {
+        sharedPreferences.edit { clear() }
+    }
 }

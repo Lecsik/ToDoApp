@@ -1,12 +1,26 @@
 package ru.startandroid.todoapp.server
 
-import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
+import io.ktor.server.auth.UserIdPrincipal
+import io.ktor.server.auth.bearer
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 import ru.startandroid.todoapp.server.plugins.configureRouting
 import ru.startandroid.todoapp.server.plugins.configureSerialization
 
-fun main(args: Array<String>): Unit = io.ktor.server.netty.EngineMain.main(args)
+fun main() {
+    embeddedServer(Netty, port = 8080) {
+        install(Authentication) {
+            bearer {
+                authenticate { tokenCredential ->
+                    val userId = Repository().findUser(tokenCredential.token) ?: run { null }
+                    UserIdPrincipal(userId.toString())
+                }
+            }
+        }
 
-fun Application.module() {
-    configureRouting()
-    configureSerialization()
+        configureRouting()
+        configureSerialization()
+    }.start(wait = true)
 }

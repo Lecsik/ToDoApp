@@ -1,11 +1,13 @@
 package ru.startandroid.todoapp.presentation.task
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import okio.IOException
 import org.joda.time.LocalDate
 import org.kodein.di.DIAware
 import org.kodein.di.android.x.closestDI
@@ -53,7 +55,11 @@ class TaskViewModel(application: Application) : AndroidViewModel(application), D
         val existingItem = existingItem
         check(existingItem != null) { "No existing item" }
         viewModelScope.launch {
-            repository.removeItem(existingItem.id)
+            try {
+                repository.removeItem(existingItem.id)
+            } catch (exception: IOException) {
+                Log.d("server response", "some problem with server in removeItem")
+            }
             operationPrivate.value = null
             donePrivate.value = true
         }
@@ -77,7 +83,11 @@ class TaskViewModel(application: Application) : AndroidViewModel(application), D
             null
         )
         viewModelScope.launch {
-            repository.addItem(todoItem)
+            try {
+                repository.addItem(todoItem)
+            } catch (exception: IOException) {
+                Log.d("server response", "some problem with server in addItem")
+            }
             operationPrivate.value = null
             donePrivate.value = true
         }
