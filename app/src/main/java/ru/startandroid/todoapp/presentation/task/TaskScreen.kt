@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -138,7 +139,7 @@ fun TaskScreenPresentation(
     onPriorityChange: (TodoItem.Priority) -> Unit,
     onSave: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
+    val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var mDisplayMenu by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -195,6 +196,7 @@ fun TaskScreenPresentation(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.secondary,
                 ),
+                scrollBehavior = topAppBarScrollBehavior
             )
         },
         modifier = Modifier.imePadding()
@@ -206,8 +208,10 @@ fun TaskScreenPresentation(
         }
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+                .fillMaxWidth()
+                .padding(innerPadding)
+                .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Spacer(modifier = Modifier.height(20.dp))
@@ -215,8 +219,7 @@ fun TaskScreenPresentation(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .wrapContentHeight()
-                    .fillMaxWidth()
-                    .verticalScroll(scrollState),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(2.dp, colorPriority),
             ) {
