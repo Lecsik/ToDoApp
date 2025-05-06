@@ -12,6 +12,7 @@ import org.kodein.di.DIAware
 import org.kodein.di.android.x.closestDI
 import org.kodein.di.instance
 import ru.startandroid.todoapp.data.PreferencesRepository
+import ru.startandroid.todoapp.data.ServerException
 import ru.startandroid.todoapp.data.TodoItemsRepository
 
 class LoginViewModel(application: Application) : AndroidViewModel(application), DIAware {
@@ -65,6 +66,14 @@ class LoginViewModel(application: Application) : AndroidViewModel(application), 
                     if (isExist) {
                         donePrivate.value = true
                     } else errorsPrivate.value = Errors.USER_NOT_FOUND
+                } catch (exception: ServerException) {
+                    when (exception.errorKey) {
+                        "login_not_found" -> errorsPrivate.value = Errors.USER_NOT_FOUND
+                        "login_is_empty" -> errorsPrivate.value = Errors.LOGIN_EMPTY
+                        else -> {
+                            // отобразить дефолтный диалог
+                        }
+                    }
                 } catch (exception: IOException) {
                     Log.d("server response", "some problem with server in login")
                 }

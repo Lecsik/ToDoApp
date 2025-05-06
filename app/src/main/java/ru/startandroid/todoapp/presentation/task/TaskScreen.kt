@@ -61,10 +61,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation.NavController
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 import org.joda.time.DateTimeZone
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
@@ -72,12 +71,12 @@ import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
 @Parcelize
-class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
+class TaskScreen(private val navController: @RawValue NavController, private val item: TodoItem?) :
+    Parcelable {
 
     @Composable
-    override fun Content() {
+    fun Content() {
         val viewModel = viewModel<TaskViewModel>()
-        val navigator = LocalNavigator.currentOrThrow
         LaunchedEffect(Unit) {
             item?.let { viewModel.setExistingItem(it) }
         }
@@ -89,7 +88,9 @@ class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
         val operation by viewModel.operation.observeAsState()
 
         TaskScreenPresentation(
-            onBackClick = { navigator.pop() },
+            onBackClick = {
+                navController.popBackStack()
+            },
             isItemExists = isItemExists,
             onDeleteClick = {
                 viewModel.remove()
@@ -110,7 +111,7 @@ class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
         )
 
         if (done) {
-            navigator.pop()
+            navController.popBackStack()
         }
         if (operation == TaskViewModel.Operation.LOADING) {
             Box(

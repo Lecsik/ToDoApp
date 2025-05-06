@@ -15,11 +15,11 @@ dependencies {
     implementation("joda-time:joda-time:2.14.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("org.xerial:sqlite-jdbc:3.49.1.0")
-    implementation("io.ktor:ktor-server-cors:3.1.2")
-    implementation("io.ktor:ktor-server-content-negotiation-jvm:3.1.2")
-    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:3.1.2")
-    implementation("io.ktor:ktor-server-netty-jvm:3.1.2")
+    implementation("io.ktor:ktor-server-cors:3.1.3")
+    implementation("io.ktor:ktor-server-content-negotiation-jvm:3.1.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:3.1.3")
+    implementation("io.ktor:ktor-server-netty-jvm:3.1.3")
     implementation("ch.qos.logback:logback-classic:1.5.18")
-    implementation("io.ktor:ktor-server-auth:3.1.2")
+    implementation("io.ktor:ktor-server-auth:3.1.3")
 
 }

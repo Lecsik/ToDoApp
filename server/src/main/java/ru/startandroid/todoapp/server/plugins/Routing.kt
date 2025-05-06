@@ -72,8 +72,13 @@ fun Application.configureRouting() {
                         call.respond(HttpStatusCode.Unauthorized)
                         return@get
                     }
-
-                    call.respond(repository.getAllItems(userId.toLong()))
+                    try {
+                        call.respond(repository.getAllItems(userId.toLong()))
+                    } catch (ex: IllegalStateException) {
+                        call.respond(HttpStatusCode.BadRequest)
+                    } catch (ex: JsonConvertException) {
+                        call.respond(HttpStatusCode.BadRequest)
+                    }
                 }
 
                 post("/set") {
