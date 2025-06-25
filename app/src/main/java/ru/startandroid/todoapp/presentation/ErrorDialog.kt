@@ -42,6 +42,9 @@ fun errorDescription(
             stringResource(R.string.incorrect_password)
         }
 
+        "DESCRIPTION_TOO_LONG" -> {
+            stringResource(R.string.description_too_long)
+        }
         else -> {
             ""
         }

@@ -100,7 +100,11 @@ class TaskScreen(private val navController: @RawValue NavController, private val
                 viewModel.remove()
             },
             description = description,
-            onDescriptionChange = { text -> viewModel.description.value = text },
+            onDescriptionChange = { text ->
+                if (text.length <= 250) {
+                    viewModel.description.value = text
+                }
+            },
             dueDate = dueDate,
             onDueDateChange = { date: LocalDate? -> viewModel.dueDate.value = date },
             priority = priority,

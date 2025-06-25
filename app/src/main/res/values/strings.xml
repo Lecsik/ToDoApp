@@ -47,5 +47,6 @@
     <string name="password_too_long">The password must be no longer than 40 characters</string>
     <string name="user_not_found">User with this login not found</string>
     <string name="incorrect_password">Incorrect password</string>
+    <string name="description_too_long">The task description should not exceed 250 characters</string>
 
 </resources>
