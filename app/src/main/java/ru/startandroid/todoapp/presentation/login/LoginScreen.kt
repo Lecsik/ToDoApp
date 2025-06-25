@@ -53,6 +53,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ru.startandroid.todoapp.R
+import ru.startandroid.todoapp.models.Error
+import ru.startandroid.todoapp.presentation.ErrorDialog
+import ru.startandroid.todoapp.presentation.errorDescription
 import ru.startandroid.todoapp.presentation.main.LoginDestination
 import ru.startandroid.todoapp.presentation.main.MainDestination
 import ru.startandroid.todoapp.presentation.main.RegistrationDestination
@@ -66,7 +69,7 @@ class LoginScreen(private val navController: NavController) {
         val passwordState by viewModel.password.observeAsState("")
         val done by viewModel.done.observeAsState(false)
         val operation by viewModel.operation.observeAsState()
-        val errors by viewModel.errors.observeAsState()
+        val errors by viewModel.errors.observeAsState(emptyList())
 
         if (viewModel.checkAuth()) {
             navController.navigate(MainDestination) {
@@ -75,15 +78,16 @@ class LoginScreen(private val navController: NavController) {
         }
 
         LoginPresentation(
-            {
+            goToRegistrationScreen = {
                 navController.navigate(RegistrationDestination)
             },
-            loginState,
-            { login -> viewModel.setLogin(login) },
-            passwordState,
-            { password -> viewModel.setPassword(password) },
-            errors,
-            { viewModel.loginUser() },
+            login = loginState,
+            setLogin = { login -> viewModel.setLogin(login) },
+            password = passwordState,
+            setPassword = { password -> viewModel.setPassword(password) },
+            errors = errors,
+            closeServerError = { viewModel.closeServerError() },
+            loginUser = { viewModel.loginUser() },
         )
 
         if (done) {
@@ -103,6 +107,7 @@ class LoginScreen(private val navController: NavController) {
         }
     }
 
+
     @Composable
     fun LoginPresentation(
         goToRegistrationScreen: () -> Unit,
@@ -110,10 +115,12 @@ class LoginScreen(private val navController: NavController) {
         setLogin: (String) -> Unit,
         password: String,
         setPassword: (String) -> Unit,
-        errors: LoginViewModel.Errors?,
+        errors: List<Error>,
+        closeServerError: () -> Unit,
         loginUser: () -> Unit,
     ) {
         var passwordVisibility by rememberSaveable { mutableStateOf(false) }
+
         Scaffold(
             content = { padding ->
                 Column(
@@ -134,7 +141,6 @@ class LoginScreen(private val navController: NavController) {
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start
                     )
-
 
                     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                         TextButton(
@@ -170,8 +176,8 @@ class LoginScreen(private val navController: NavController) {
                             Text(text = stringResource(R.string.login))
                         },
                         supportingText = {
-                            when (errors) {
-                                LoginViewModel.Errors.LOGIN_EMPTY -> {
+                            when {
+                                errors.contains(Error.LoginEmpty) -> {
                                     Text(
                                         text = stringResource(R.string.empty_login),
                                         color = colorResource(R.color.delete),
@@ -180,20 +186,18 @@ class LoginScreen(private val navController: NavController) {
                                     )
                                 }
 
-                                LoginViewModel.Errors.USER_NOT_FOUND -> {
+                                errors.contains(Error.UserNotExists) -> {
                                     Text(
-                                        text = stringResource(R.string.authorization_error),
+                                        text = stringResource(R.string.user_not_found),
                                         color = colorResource(R.color.delete),
                                         textAlign = TextAlign.End,
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
-
-                                else -> {}
                             }
-
                         },
-                        isError = errors != null,
+                        isError = errors.contains(Error.LoginEmpty)
+                                || errors.contains(Error.UserNotExists),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
                         ),
@@ -202,9 +206,7 @@ class LoginScreen(private val navController: NavController) {
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary
                         ),
-
-
-                        )
+                    )
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -218,16 +220,16 @@ class LoginScreen(private val navController: NavController) {
                         visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         supportingText = {
-                            if (errors == LoginViewModel.Errors.USER_NOT_FOUND) {
+                            if (errors.contains(Error.WrongPassword)) {
                                 Text(
-                                    text = stringResource(R.string.authorization_error),
+                                    text = stringResource(R.string.incorrect_password),
                                     color = colorResource(R.color.delete),
                                     textAlign = TextAlign.End,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         },
-                        isError = errors != null,
+                        isError = errors.contains(Error.WrongPassword),
                         trailingIcon = {
                             IconButton(
                                 onClick = { passwordVisibility = !passwordVisibility },
@@ -267,11 +269,29 @@ class LoginScreen(private val navController: NavController) {
                             fontSize = 18.sp
                         )
                     }
+
+                    val serverError = errors
+                        .filterIsInstance<Error.ServerError>()
+                        .firstOrNull()
+                    val unknownError = errors
+                        .filterIsInstance<Error.UnknownError>()
+                        .firstOrNull()
+                    serverError?.let {
+                        ErrorDialog(
+                            onDismissRequest = closeServerError,
+                            errorDescription = errorDescription(serverError)
+                        )
+                    }
+                    unknownError?.let {
+                        ErrorDialog(
+                            onDismissRequest = closeServerError,
+                            errorDescription = stringResource(R.string.server_problem)
+                        )
+                    }
                 }
             }
         )
     }
-
 
     @Suppress("ComposePreviewMustBeTopLevelFunction")
     @Preview
@@ -280,13 +300,14 @@ class LoginScreen(private val navController: NavController) {
     ) {
         MyTheme {
             LoginPresentation(
-                {},
-                "",
-                {},
-                "",
-                {},
-                null,
-                {},
+                goToRegistrationScreen = {},
+                login = "",
+                setLogin = {},
+                password = "",
+                setPassword = {},
+                errors = emptyList(),
+                closeServerError = {},
+                loginUser = {},
             )
         }
     }

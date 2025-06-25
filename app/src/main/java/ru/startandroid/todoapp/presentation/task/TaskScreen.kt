@@ -67,7 +67,10 @@ import kotlinx.parcelize.RawValue
 import org.joda.time.DateTimeZone
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
+import ru.startandroid.todoapp.models.Error
 import ru.startandroid.todoapp.models.TodoItem
+import ru.startandroid.todoapp.presentation.ErrorDialog
+import ru.startandroid.todoapp.presentation.errorDescription
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
 @Parcelize
@@ -86,6 +89,7 @@ class TaskScreen(private val navController: @RawValue NavController, private val
         val done by viewModel.done.observeAsState(false)
         val isItemExists by viewModel.isItemExists.observeAsState(false)
         val operation by viewModel.operation.observeAsState()
+        val errors by viewModel.errors.observeAsState(emptyList())
 
         TaskScreenPresentation(
             onBackClick = {
@@ -104,10 +108,10 @@ class TaskScreen(private val navController: @RawValue NavController, private val
                 viewModel.priority.value = priorityEntry
             },
             onSave = {
-                viewModel.description.value?.takeIf { it.isNotBlank() }?.let {
-                    viewModel.save()
-                }
-            }
+                viewModel.description.value?.takeIf { it.isNotBlank() }?.let { viewModel.save() }
+            },
+            errors = errors,
+            closeServerError = { viewModel.closeServerError() }
         )
 
         if (done) {
@@ -115,12 +119,12 @@ class TaskScreen(private val navController: @RawValue NavController, private val
         }
         if (operation == TaskViewModel.Operation.LOADING) {
             Box(
-                Modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
                 contentAlignment = Alignment.Center
             ) {
-                LinearProgressIndicator(Modifier.align(Alignment.Center))
+                LinearProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }
@@ -138,7 +142,9 @@ fun TaskScreenPresentation(
     onDueDateChange: (LocalDate?) -> Unit,
     priority: TodoItem.Priority,
     onPriorityChange: (TodoItem.Priority) -> Unit,
-    onSave: () -> Unit
+    onSave: () -> Unit,
+    errors: List<Error>,
+    closeServerError: () -> Unit,
 ) {
     val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var mDisplayMenu by remember { mutableStateOf(false) }
@@ -147,7 +153,7 @@ fun TaskScreenPresentation(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        stringResource(id = R.string.task_screen_title),
+                        text = stringResource(id = R.string.task_screen_title),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -184,7 +190,7 @@ fun TaskScreenPresentation(
                                             tint = colorResource(id = R.color.delete)
                                         )
                                         Spacer(modifier = Modifier.weight(1.0f))
-                                        Text(stringResource(id = R.string.delete_label))
+                                        Text(text = stringResource(id = R.string.delete_label))
                                     }
                                 },
                                 onClick = onDeleteClick,
@@ -286,7 +292,6 @@ fun TaskScreenPresentation(
                                 ) {
                                     Text(text = stringResource(R.string.cancel_label))
                                 }
-
                                 TextButton(
                                     onClick = {
                                         onDueDateChange(
@@ -321,7 +326,7 @@ fun TaskScreenPresentation(
                     )
                     OutlinedButton(
                         onClick = { onPriorityChange(entry) },
-                        Modifier
+                        modifier = Modifier
                             .weight(1.0f)
                             .padding(end = 8.dp),
                         shape = RoundedCornerShape(16.dp),
@@ -335,16 +340,36 @@ fun TaskScreenPresentation(
                     }
                 }
             }
-            Spacer(Modifier.weight(1.0f))
+            Spacer(modifier = Modifier.weight(1.0f))
             Button(
                 onClick = onSave,
-                Modifier
+                modifier = Modifier
                     .padding(horizontal = 8.dp, vertical = 20.dp)
                     .fillMaxWidth(),
                 enabled = description.isNotBlank(),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Text(text = stringResource(id = R.string.save_button))
+            }
+
+            val serverError = errors
+                .filterIsInstance<Error.ServerError>()
+                .firstOrNull()
+            val unknownError = errors
+                .filterIsInstance<Error.UnknownError>()
+                .firstOrNull()
+
+            serverError?.let {
+                ErrorDialog(
+                    onDismissRequest = closeServerError,
+                    errorDescription = errorDescription(serverError)
+                )
+            }
+            unknownError?.let {
+                ErrorDialog(
+                    onDismissRequest = closeServerError,
+                    errorDescription = stringResource(R.string.server_problem)
+                )
             }
         }
     }
@@ -356,9 +381,9 @@ fun TaskScreenPresentation(
 fun TaskScreenPresentationPreview() {
     MyTheme {
         TaskScreenPresentation(
-            {},
-            true,
-            {},
+            onBackClick = {},
+            isItemExists = true,
+            onDeleteClick = {},
             description = "description,description,descriptiondescription,description," +
                     "description,description,description,description,description," +
                     "description,descriptiondescription,description,description,description," +
@@ -373,12 +398,14 @@ fun TaskScreenPresentationPreview() {
                     "description,descriptiondescription,description,description,description," +
                     "description,description,descriptiondescription,descriptiondescription," +
                     "description,description,description,description111111",
-            {},
-            LocalDate.now(),
-            {},
-            TodoItem.Priority.NONE,
-            {},
-            {}
+            onDescriptionChange = {},
+            dueDate = LocalDate.now(),
+            onDueDateChange = {},
+            priority = TodoItem.Priority.NONE,
+            onPriorityChange = {},
+            onSave = {},
+            errors = emptyList(),
+            closeServerError = {},
         )
     }
 }
@@ -388,16 +415,18 @@ fun TaskScreenPresentationPreview() {
 fun TaskScreenPresentationPreviewEmpty() {
     MyTheme {
         TaskScreenPresentation(
-            {},
-            false,
-            {},
+            onBackClick = {},
+            isItemExists = false,
+            onDeleteClick = {},
             description = "",
-            {},
-            null,
-            {},
-            TodoItem.Priority.HIGH,
-            {},
-            {}
+            onDescriptionChange = {},
+            dueDate = null,
+            onDueDateChange = {},
+            priority = TodoItem.Priority.HIGH,
+            onPriorityChange = {},
+            onSave = {},
+            errors = emptyList(),
+            closeServerError = {},
         )
     }
 }

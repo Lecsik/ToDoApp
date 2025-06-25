@@ -1,4 +1,4 @@
-package ru.startandroid.todoapp.data
+package ru.startandroid.todoapp.data.database
 
 import androidx.room.TypeConverter
 import org.joda.time.LocalDate

@@ -1,4 +1,4 @@
-package ru.startandroid.todoapp.data
+package ru.startandroid.todoapp.data.api
 
 import okhttp3.Interceptor
 import okhttp3.Response

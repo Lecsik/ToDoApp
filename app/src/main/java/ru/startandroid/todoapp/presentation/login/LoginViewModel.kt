@@ -1,19 +1,18 @@
 package ru.startandroid.todoapp.presentation.login
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import okio.IOException
 import org.kodein.di.DIAware
 import org.kodein.di.android.x.closestDI
 import org.kodein.di.instance
-import ru.startandroid.todoapp.data.PreferencesRepository
-import ru.startandroid.todoapp.data.ServerException
 import ru.startandroid.todoapp.data.TodoItemsRepository
+import ru.startandroid.todoapp.data.api.PreferencesRepository
+import ru.startandroid.todoapp.data.api.ServerException
+import ru.startandroid.todoapp.models.Error
 
 class LoginViewModel(application: Application) : AndroidViewModel(application), DIAware {
     override val di by closestDI()
@@ -23,8 +22,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application), 
     private val operationPrivate = MutableLiveData<Operation?>(null)
     val operation: LiveData<Operation?> get() = operationPrivate
 
-    private val errorsPrivate = MutableLiveData<Errors?>(null)
-    val errors: LiveData<Errors?> get() = errorsPrivate
+    private val errorsPrivate = MutableLiveData<List<Error>>(emptyList())
+    val errors: LiveData<List<Error>> get() = errorsPrivate
 
     private val donePrivate = MutableLiveData(false)
     val done: LiveData<Boolean> get() = donePrivate
@@ -36,49 +35,61 @@ class LoginViewModel(application: Application) : AndroidViewModel(application), 
         LOADING
     }
 
-    enum class Errors {
-        LOGIN_EMPTY,
-        USER_NOT_FOUND
-    }
-
     fun checkAuth(): Boolean {
         return token != null
     }
 
+    fun closeServerError() {
+        errorsPrivate.value = errorsPrivate.value!!
+            .filterNot { it is Error.ServerError }
+            .filterNot { it is Error.UnknownError }
+    }
+
     fun setLogin(value: String) {
         login.value = value
-        errorsPrivate.value = null
+        errorsPrivate.value = errorsPrivate.value!!
+            .filterNot { it is Error.LoginEmpty }
+            .filterNot { it is Error.UserNotExists }
+            .filterNot { it is Error.WrongPassword }
     }
 
     fun setPassword(value: String) {
         password.value = value
-        errorsPrivate.value = null
+        errorsPrivate.value = errorsPrivate.value!!
+            .filterNot { it is Error.WrongPassword }
+
     }
 
     fun loginUser() {
+        if (login.value.isNullOrBlank()) {
+            errorsPrivate.value = errorsPrivate.value!! + Error.LoginEmpty
+        } else {
+            errorsPrivate.value = errorsPrivate.value!!.filterNot { it is Error.LoginEmpty }
+        }
+
+        if (errorsPrivate.value!!.isNotEmpty()) return
+
         operationPrivate.value = Operation.LOADING
-        if (login.value.isNullOrBlank()) errorsPrivate.value = Errors.LOGIN_EMPTY
         viewModelScope.launch {
-            if (errorsPrivate.value != Errors.LOGIN_EMPTY) {
-                try {
-                    val isExist =
-                        repository.login(login.value.toString(), password.value.toString())
-                    if (isExist) {
-                        donePrivate.value = true
-                    } else errorsPrivate.value = Errors.USER_NOT_FOUND
-                } catch (exception: ServerException) {
-                    when (exception.errorKey) {
-                        "login_not_found" -> errorsPrivate.value = Errors.USER_NOT_FOUND
-                        "login_is_empty" -> errorsPrivate.value = Errors.LOGIN_EMPTY
-                        else -> {
-                            // отобразить дефолтный диалог
-                        }
-                    }
-                } catch (exception: IOException) {
-                    Log.d("server response", "some problem with server in login")
+            try {
+                repository.login(login.value.toString(), password.value.toString())
+                donePrivate.value = true
+            } catch (e: ServerException) {
+                if (e.errorKey == "LOGIN_NOT_FOUND") {
+                    errorsPrivate.value = errorsPrivate.value!! + Error.UserNotExists
+                } else if (e.errorKey == "WRONG_PASSWORD") {
+                    errorsPrivate.value = errorsPrivate.value!! + Error.WrongPassword
+                } else if (e.errorKey != null) {
+                    errorsPrivate.value =
+                        errorsPrivate.value!! + Error.ServerError(e.errorKey)
+                } else {
+                    errorsPrivate.value = errorsPrivate.value!! + Error.UnknownError
                 }
+            } catch (e: Exception) {
+                errorsPrivate.value = errorsPrivate.value!! + Error.UnknownError
+            } finally {
+                operationPrivate.value = null
             }
-            operationPrivate.value = null
         }
     }
 }

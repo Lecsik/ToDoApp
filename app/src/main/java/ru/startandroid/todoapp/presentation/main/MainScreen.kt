@@ -58,7 +58,10 @@ import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.RawValue
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
+import ru.startandroid.todoapp.models.Error
 import ru.startandroid.todoapp.models.TodoItem
+import ru.startandroid.todoapp.presentation.ErrorDialog
+import ru.startandroid.todoapp.presentation.errorDescription
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
 @Parcelize
@@ -83,6 +86,7 @@ class MainScreen(private val navController: @RawValue NavController) : Parcelabl
                 popUpTo<MainDestination> { inclusive = true }
             }
         }
+        val errors by viewModel.errors.observeAsState(emptyList())
 
         LaunchedEffect(Unit) {
             viewModel.refreshItems()
@@ -113,18 +117,20 @@ class MainScreen(private val navController: @RawValue NavController) : Parcelabl
                         )
                     )
                 )
-            }
+            },
+            errors = errors,
+            closeServerError = { viewModel.closeServerError() }
         )
         if (operation == MainViewModel.Operation.LOADING) {
             Box(
-                Modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .background(
                         color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                LinearProgressIndicator(Modifier.align(Alignment.Center))
+                LinearProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }
@@ -144,6 +150,8 @@ private fun TodoItemListPresentation(
     onSetCompleted: (position: Int, isCompleted: Boolean) -> Unit,
     onItemAddClick: () -> Unit,
     onItemClick: (TodoItem) -> Unit,
+    errors: List<Error>,
+    closeServerError: () -> Unit,
 ) {
     val scrollBehavior =
         TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
@@ -154,8 +162,8 @@ private fun TodoItemListPresentation(
         topBar = {
             MediumTopAppBar(
                 title = {
-                    Column(Modifier.wrapContentHeight()) {
-                        Text(stringResource(R.string.large_title))
+                    Column(modifier = Modifier.wrapContentHeight()) {
+                        Text(text = stringResource(R.string.large_title))
                         Text(
                             text = stringResource(
                                 id = R.string.executed_title,
@@ -264,7 +272,7 @@ private fun TodoItemListPresentation(
             ) {
                 items(list.size, null, itemContent = { index ->
                     ItemCard(
-                        list[index],
+                        item = list[index],
                         onCheckedChange = { onSetCompleted(index, !list[index].isCompleted) },
                         onRemove = { onRemoveClick(index) },
                         onClick = { onItemClick(list[index]) },
@@ -274,6 +282,24 @@ private fun TodoItemListPresentation(
             }
         }
 
+        val serverError = errors
+            .filterIsInstance<Error.ServerError>()
+            .firstOrNull()
+        val unknownError = errors
+            .filterIsInstance<Error.UnknownError>()
+            .firstOrNull()
+        serverError?.let {
+            ErrorDialog(
+                onDismissRequest = closeServerError,
+                errorDescription = errorDescription(serverError)
+            )
+        }
+        unknownError?.let {
+            ErrorDialog(
+                onDismissRequest = closeServerError,
+                errorDescription = stringResource(R.string.server_problem)
+            )
+        }
     }
 }
 
@@ -289,57 +315,59 @@ private fun TodoItemListPreview() {
             countCompleted = 2,
             list = listOf(
                 TodoItem(
-                    "11111",
-                    "1111111",
-                    TodoItem.Priority.LOW,
-                    false,
-                    LocalDate.now(),
-                    null,
-                    null
+                    id = "11111",
+                    description = "1111111",
+                    priority = TodoItem.Priority.LOW,
+                    isCompleted = false,
+                    createdDate = LocalDate.now(),
+                    dueDate = null,
+                    changedDate = null
                 ),
                 TodoItem(
-                    "11112",
-                    "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
-                    TodoItem.Priority.LOW,
-                    false,
-                    LocalDate.now(),
-                    LocalDate(1996, 4, 4),
-                    null
+                    id = "11112",
+                    description = "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
+                    priority = TodoItem.Priority.LOW,
+                    isCompleted = false,
+                    createdDate = LocalDate.now(),
+                    dueDate = LocalDate(1996, 4, 4),
+                    changedDate = null
                 ),
                 TodoItem(
-                    "11113",
-                    "Jetpack Compose",
-                    TodoItem.Priority.HIGH,
-                    true,
-                    LocalDate.now(),
-                    null,
-                    null
+                    id = "11113",
+                    description = "Jetpack Compose",
+                    priority = TodoItem.Priority.HIGH,
+                    isCompleted = true,
+                    createdDate = LocalDate.now(),
+                    dueDate = null,
+                    changedDate = null
                 ),
                 TodoItem(
-                    "11114",
-                    "View в Android",
-                    TodoItem.Priority.HIGH,
-                    false,
-                    LocalDate.now(),
-                    LocalDate(1996, 4, 4),
-                    null
+                    id = "11114",
+                    description = "View в Android",
+                    priority = TodoItem.Priority.HIGH,
+                    isCompleted = false,
+                    createdDate = LocalDate.now(),
+                    dueDate = LocalDate(1996, 4, 4),
+                    changedDate = null
                 ),
                 TodoItem(
-                    "11115",
-                    "Многопоточность",
-                    TodoItem.Priority.LOW,
-                    true,
-                    LocalDate.now(),
-                    LocalDate(1996, 4, 4),
-                    null
+                    id = "11115",
+                    description = "Многопоточность",
+                    priority = TodoItem.Priority.LOW,
+                    isCompleted = true,
+                    createdDate = LocalDate.now(),
+                    dueDate = LocalDate(1996, 4, 4),
+                    changedDate = null
                 )
             ),
-            false,
+            refresh = false,
             onPullRefresh = {},
             onRemoveClick = {},
             onSetCompleted = { _, _ -> },
             onItemAddClick = {},
-            onItemClick = {}
+            onItemClick = {},
+            errors = emptyList(),
+            closeServerError = {},
         )
     }
 

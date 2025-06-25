@@ -38,5 +38,14 @@
     <string name="exit_app">Exit</string>
     <string name="exit_dialog_title">Exit the app?</string>
     <string name="exit_dialog_text">Are you sure you want to exit the app?</string>
+    <string name="ok">OK</string>
+    <string name="error">Error</string>
+    <string name="server_problem">Unknown problem</string>
+    <string name="login_too_short">Login must be at least 4 characters long</string>
+    <string name="login_too_long">Login must be no longer than 30 characters</string>
+    <string name="password_too_short">Password must be at least 8 characters long</string>
+    <string name="password_too_long">The password must be no longer than 40 characters</string>
+    <string name="user_not_found">User with this login not found</string>
+    <string name="incorrect_password">Incorrect password</string>
 
 </resources>

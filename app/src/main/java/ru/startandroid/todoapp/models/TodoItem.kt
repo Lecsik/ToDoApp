@@ -5,7 +5,6 @@ import androidx.room.Entity
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import org.joda.time.LocalDate
-import ru.startandroid.todoapp.data.LocalDateSerializer
 
 @Entity(primaryKeys = ["id"])
 @Serializable

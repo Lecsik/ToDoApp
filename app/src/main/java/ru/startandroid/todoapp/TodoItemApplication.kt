@@ -12,10 +12,11 @@ import org.kodein.di.bindSingleton
 import org.kodein.di.instance
 import retrofit2.Retrofit
 import retrofit2.create
-import ru.startandroid.todoapp.data.AuthInterceptor
-import ru.startandroid.todoapp.data.PreferencesRepository
-import ru.startandroid.todoapp.data.TodoItemApi
 import ru.startandroid.todoapp.data.TodoItemsRepository
+import ru.startandroid.todoapp.data.api.AuthInterceptor
+import ru.startandroid.todoapp.data.api.ErrorsInterceptor
+import ru.startandroid.todoapp.data.api.PreferencesRepository
+import ru.startandroid.todoapp.data.api.TodoItemApi
 
 class TodoItemApplication : Application(), DIAware {
 
@@ -28,6 +29,7 @@ class TodoItemApplication : Application(), DIAware {
                     OkHttpClient.Builder()
                         .addInterceptor(AuthInterceptor(instance()))
                         .addInterceptor(HttpLoggingInterceptor())
+                        .addInterceptor(ErrorsInterceptor())
                         .build()
                 )
                 .build()

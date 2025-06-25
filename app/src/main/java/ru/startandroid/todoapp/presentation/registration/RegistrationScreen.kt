@@ -53,9 +53,13 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import ru.startandroid.todoapp.R
+import ru.startandroid.todoapp.models.Error
+import ru.startandroid.todoapp.presentation.ErrorDialog
+import ru.startandroid.todoapp.presentation.errorDescription
 import ru.startandroid.todoapp.presentation.main.LoginDestination
 import ru.startandroid.todoapp.presentation.main.MainDestination
 import ru.startandroid.todoapp.ui.theme.MyTheme
+
 
 class RegistrationScreen(private val navController: NavController) {
     @Composable
@@ -67,20 +71,21 @@ class RegistrationScreen(private val navController: NavController) {
 
         val done by viewModel.done.observeAsState(false)
         val operation by viewModel.operation.observeAsState()
-        val errors by viewModel.errors.observeAsState()
+        val errors by viewModel.errors.observeAsState(emptyList())
 
         RegistrationPresentation(
-            {
+            onBackClick = {
                 navController.popBackStack()
             },
-            loginState,
-            { login -> viewModel.setLogin(login) },
-            passwordFirstState,
-            passwordSecondState,
-            { password -> viewModel.setPasswordFirst(password) },
-            { password -> viewModel.setPasswordSecond(password) },
-            errors,
-            { viewModel.registerUser() }
+            loginState = loginState,
+            setLogin = { login -> viewModel.setLogin(login) },
+            passwordFirst = passwordFirstState,
+            passwordSecond = passwordSecondState,
+            setPasswordFirst = { password -> viewModel.setPasswordFirst(password) },
+            setPasswordSecond = { password -> viewModel.setPasswordSecond(password) },
+            errors = errors,
+            closeServerError = { viewModel.closeServerError() },
+            registerUser = { viewModel.registerUser() }
         )
 
         if (done) {
@@ -90,16 +95,15 @@ class RegistrationScreen(private val navController: NavController) {
         }
         if (operation == RegistrationViewModel.Operation.LOADING) {
             Box(
-                Modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .background(color = MaterialTheme.colorScheme.background.copy(alpha = 0.8f)),
                 contentAlignment = Alignment.Center
             ) {
-                LinearProgressIndicator(Modifier.align(Alignment.Center))
+                LinearProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
         }
     }
-
 
     @Composable
     fun RegistrationPresentation(
@@ -110,7 +114,8 @@ class RegistrationScreen(private val navController: NavController) {
         passwordSecond: String,
         setPasswordFirst: (String) -> Unit,
         setPasswordSecond: (String) -> Unit,
-        errors: RegistrationViewModel.Errors?,
+        errors: List<Error>,
+        closeServerError: () -> Unit,
         registerUser: () -> Unit,
     ) {
         var passwordVisibility by rememberSaveable { mutableStateOf(false) }
@@ -137,7 +142,7 @@ class RegistrationScreen(private val navController: NavController) {
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Start
                     )
-                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                    CompositionLocalProvider(value = LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                         TextButton(
                             onClick = {
                                 onBackClick()
@@ -162,6 +167,7 @@ class RegistrationScreen(private val navController: NavController) {
                             )
                         }
                     }
+
                     Spacer(modifier = Modifier.height(32.dp))
 
                     OutlinedTextField(
@@ -178,8 +184,8 @@ class RegistrationScreen(private val navController: NavController) {
                             keyboardType = KeyboardType.Text,
                         ),
                         supportingText = {
-                            when (errors) {
-                                RegistrationViewModel.Errors.LOGIN_EMPTY -> {
+                            when {
+                                errors.contains(Error.LoginEmpty) -> {
                                     Text(
                                         text = stringResource(R.string.empty_login),
                                         color = colorResource(R.color.delete),
@@ -188,7 +194,7 @@ class RegistrationScreen(private val navController: NavController) {
                                     )
                                 }
 
-                                RegistrationViewModel.Errors.USER_FOUND -> {
+                                errors.contains(Error.UserExists) -> {
                                     Text(
                                         text = stringResource(R.string.registration_error),
                                         color = colorResource(R.color.delete),
@@ -196,18 +202,16 @@ class RegistrationScreen(private val navController: NavController) {
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
-
-                                else -> {}
                             }
                         },
-                        isError = errors != null,
+                        isError = errors.contains(Error.LoginEmpty)
+                                || errors.contains(Error.UserExists),
                         maxLines = 1,
                         shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary
                         ),
                     )
-
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -221,8 +225,8 @@ class RegistrationScreen(private val navController: NavController) {
                         visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         supportingText = {
-                            when (errors) {
-                                RegistrationViewModel.Errors.IS_SHORT -> {
+                            when {
+                                errors.contains(Error.ShortPassword) -> {
                                     Text(
                                         text = stringResource(R.string.validation_password_error),
                                         color = colorResource(R.color.delete),
@@ -230,29 +234,9 @@ class RegistrationScreen(private val navController: NavController) {
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
-
-                                RegistrationViewModel.Errors.NOT_EQUALS -> {
-                                    Text(
-                                        text = stringResource(R.string.password_match_error),
-                                        color = colorResource(R.color.delete),
-                                        textAlign = TextAlign.End,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-
-                                RegistrationViewModel.Errors.USER_FOUND -> {
-                                    Text(
-                                        text = stringResource(R.string.registration_error),
-                                        color = colorResource(R.color.delete),
-                                        textAlign = TextAlign.End,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-
-                                else -> {}
                             }
                         },
-                        isError = errors != null,
+                        isError = errors.contains(Error.ShortPassword),
                         trailingIcon = {
                             IconButton(
                                 onClick = { passwordVisibility = !passwordVisibility },
@@ -288,17 +272,8 @@ class RegistrationScreen(private val navController: NavController) {
                         visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         supportingText = {
-                            when (errors) {
-                                RegistrationViewModel.Errors.IS_SHORT -> {
-                                    Text(
-                                        text = stringResource(R.string.validation_password_error),
-                                        color = colorResource(R.color.delete),
-                                        textAlign = TextAlign.End,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-
-                                RegistrationViewModel.Errors.NOT_EQUALS -> {
+                            when {
+                                errors.contains(Error.PasswordsNotEqual) -> {
                                     Text(
                                         text = stringResource(R.string.password_match_error),
                                         color = colorResource(R.color.delete),
@@ -306,20 +281,9 @@ class RegistrationScreen(private val navController: NavController) {
                                         modifier = Modifier.fillMaxWidth()
                                     )
                                 }
-
-                                RegistrationViewModel.Errors.USER_FOUND -> {
-                                    Text(
-                                        text = stringResource(R.string.registration_error),
-                                        color = colorResource(R.color.delete),
-                                        textAlign = TextAlign.End,
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                }
-
-                                else -> {}
                             }
                         },
-                        isError = errors != null,
+                        isError = errors.contains(Error.PasswordsNotEqual),
                         trailingIcon = {
                             IconButton(
                                 onClick = { passwordVisibility = !passwordVisibility },
@@ -346,9 +310,7 @@ class RegistrationScreen(private val navController: NavController) {
 
                     Spacer(modifier = Modifier.height(32.dp))
                     Button(
-                        onClick = {
-                            registerUser()
-                        },
+                        onClick = { registerUser() },
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Text(
@@ -358,6 +320,25 @@ class RegistrationScreen(private val navController: NavController) {
                             text = stringResource(R.string.sign_up_button),
                             textAlign = TextAlign.Center,
                             fontSize = 18.sp
+                        )
+                    }
+
+                    val serverError = errors
+                        .filterIsInstance<Error.ServerError>()
+                        .firstOrNull()
+                    val unknownError = errors
+                        .filterIsInstance<Error.UnknownError>()
+                        .firstOrNull()
+                    serverError?.let {
+                        ErrorDialog(
+                            onDismissRequest = closeServerError,
+                            errorDescription = errorDescription(serverError)
+                        )
+                    }
+                    unknownError?.let {
+                        ErrorDialog(
+                            onDismissRequest = closeServerError,
+                            errorDescription = stringResource(R.string.server_problem)
                         )
                     }
 
@@ -372,15 +353,16 @@ class RegistrationScreen(private val navController: NavController) {
     fun RegistrationPresentationPreview() {
         MyTheme {
             RegistrationPresentation(
-                {},
-                "",
-                {},
-                "",
-                "",
-                {},
-                {},
-                null,
-                {},
+                onBackClick = {},
+                loginState = "",
+                setLogin = {},
+                passwordFirst = "",
+                passwordSecond = "",
+                setPasswordFirst = {},
+                setPasswordSecond = {},
+                errors = emptyList(),
+                closeServerError = {},
+                registerUser = {},
             )
         }
     }
