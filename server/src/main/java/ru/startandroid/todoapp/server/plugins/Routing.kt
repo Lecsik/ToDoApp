@@ -1,7 +1,6 @@
 package ru.startandroid.todoapp.server.plugins
 
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.JsonConvertException
 import io.ktor.server.application.Application
 import io.ktor.server.auth.UserIdPrincipal
 import io.ktor.server.auth.authenticate
@@ -14,6 +13,7 @@ import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import io.ktor.server.util.getOrFail
 import ru.startandroid.todoapp.server.Repository
+import ru.startandroid.todoapp.server.models.ServerException
 import ru.startandroid.todoapp.server.models.TodoItem
 
 fun Application.configureRouting() {
@@ -30,18 +30,13 @@ fun Application.configureRouting() {
                     call.respond(HttpStatusCode.BadRequest)
                     return@post
                 }
-                val token = repository.register(login, password) ?: run {
-                    call.respond(HttpStatusCode.Forbidden)
-                    return@post
-                }
+                val token = repository.register(login, password)
                 call.respond('"' + token + '"')
-            } catch (ex: IllegalStateException) {
-                call.respond(HttpStatusCode.BadRequest)
-            } catch (ex: JsonConvertException) {
-                call.respond(HttpStatusCode.BadRequest)
+            } catch (se: ServerException) {
+                call.respond(HttpStatusCode.BadRequest, se)
+            } catch (ex: Exception) {
+                call.respond(HttpStatusCode.InternalServerError)
             }
-
-
         }
         get("/login") {
             try {
@@ -53,15 +48,12 @@ fun Application.configureRouting() {
                     call.respond(HttpStatusCode.BadRequest)
                     return@get
                 }
-                val token = repository.authorization(login, password) ?: run {
-                    call.respond(HttpStatusCode.Forbidden)
-                    return@get
-                }
+                val token = repository.authorization(login, password)
                 call.respond('"' + token + '"')
-            } catch (ex: IllegalStateException) {
-                call.respond(HttpStatusCode.BadRequest)
-            } catch (ex: JsonConvertException) {
-                call.respond(HttpStatusCode.BadRequest)
+            } catch (se: ServerException) {
+                call.respond(HttpStatusCode.BadRequest, se)
+            } catch (ex: Exception) {
+                call.respond(HttpStatusCode.InternalServerError)
             }
         }
 
@@ -74,10 +66,10 @@ fun Application.configureRouting() {
                     }
                     try {
                         call.respond(repository.getAllItems(userId.toLong()))
-                    } catch (ex: IllegalStateException) {
-                        call.respond(HttpStatusCode.BadRequest)
-                    } catch (ex: JsonConvertException) {
-                        call.respond(HttpStatusCode.BadRequest)
+                    } catch (se: ServerException) {
+                        call.respond(HttpStatusCode.BadRequest, se)
+                    } catch (ex: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError)
                     }
                 }
 
@@ -90,10 +82,10 @@ fun Application.configureRouting() {
                         val list = call.receive<List<TodoItem>>()
                         repository.setAllItems(list, userId.toLong())
                         call.respond(HttpStatusCode.NoContent)
-                    } catch (ex: IllegalStateException) {
-                        call.respond(HttpStatusCode.BadRequest)
-                    } catch (ex: JsonConvertException) {
-                        call.respond(HttpStatusCode.BadRequest)
+                    } catch (se: ServerException) {
+                        call.respond(HttpStatusCode.BadRequest, se)
+                    } catch (ex: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError)
                     }
                 }
 
@@ -106,10 +98,10 @@ fun Application.configureRouting() {
                         val todoItem = call.receive<TodoItem>()
                         repository.addItem(todoItem, userId.toLong())
                         call.respond(HttpStatusCode.NoContent)
-                    } catch (ex: IllegalStateException) {
-                        call.respond(HttpStatusCode.BadRequest)
-                    } catch (ex: JsonConvertException) {
-                        call.respond(HttpStatusCode.BadRequest)
+                    } catch (se: ServerException) {
+                        call.respond(HttpStatusCode.BadRequest, se)
+                    } catch (ex: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError)
                     }
 
                 }
@@ -122,10 +114,10 @@ fun Application.configureRouting() {
                         val todoItemId = call.parameters.getOrFail("id")
                         repository.deleteItem(todoItemId)
                         call.respond(HttpStatusCode.NoContent)
-                    } catch (ex: IllegalStateException) {
-                        call.respond(HttpStatusCode.BadRequest)
-                    } catch (ex: JsonConvertException) {
-                        call.respond(HttpStatusCode.BadRequest)
+                    } catch (se: ServerException) {
+                        call.respond(HttpStatusCode.BadRequest, se)
+                    } catch (ex: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError)
                     }
                 }
 
@@ -137,10 +129,10 @@ fun Application.configureRouting() {
                     try {
                         val todoItemId = call.parameters.getOrFail("id")
                         call.respond(repository.getItem(todoItemId))
-                    } catch (ex: IllegalStateException) {
-                        call.respond(HttpStatusCode.BadRequest)
-                    } catch (ex: JsonConvertException) {
-                        call.respond(HttpStatusCode.BadRequest)
+                    } catch (se: ServerException) {
+                        call.respond(HttpStatusCode.BadRequest, se)
+                    } catch (ex: Exception) {
+                        call.respond(HttpStatusCode.InternalServerError)
                     }
                 }
             }

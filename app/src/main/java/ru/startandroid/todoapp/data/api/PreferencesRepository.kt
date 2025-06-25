@@ -1,4 +1,4 @@
-package ru.startandroid.todoapp.data
+package ru.startandroid.todoapp.data.api
 
 import android.content.Context
 import android.content.SharedPreferences

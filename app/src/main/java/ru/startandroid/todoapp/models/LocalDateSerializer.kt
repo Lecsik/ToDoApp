@@ -1,4 +1,4 @@
-package ru.startandroid.todoapp.data
+package ru.startandroid.todoapp.models
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind

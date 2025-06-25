@@ -39,4 +39,14 @@
     <string name="exit_app">Выйти</string>
     <string name="exit_dialog_title">Выйти из приложения?</string>
     <string name="exit_dialog_text">Вы уверены, что хотите выйти из приложения?</string>
+    <string name="ok">ОК</string>
+    <string name="error">Ошибка</string>
+    <string name="server_problem">Неизвестная ошибка</string>
+    <string name="login_too_short">Логин должен быть не короче 4 символов</string>
+    <string name="login_too_long">Логин должен быть не длиннее 30 символов</string>
+    <string name="password_too_short">Пароль должен быть не короче 8 символов</string>
+    <string name="password_too_long">Пароль должен быть не длиннее 40 символов</string>
+    <string name="user_not_found">Пользователь с таким логином не найден</string>
+    <string name="incorrect_password">Неверный пароль</string>
+    <string name="description_too_long">Описание задачи не должно превышать 250 символов</string>
 </resources>

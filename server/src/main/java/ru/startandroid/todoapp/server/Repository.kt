@@ -3,6 +3,7 @@ package ru.startandroid.todoapp.server
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.joda.time.LocalDate
+import ru.startandroid.todoapp.server.models.ServerException
 import ru.startandroid.todoapp.server.models.TodoItem
 import java.security.MessageDigest
 import java.sql.DriverManager
@@ -117,25 +118,30 @@ class Repository {
             statement.setString(1, todoItem.id)
             statement.executeUpdate()
         }
-        connection.prepareStatement(
-            """
+        if (todoItem.description.length > 250) throw ServerException(
+            errorKey = "DESCRIPTION_TOO_LONG",
+            errorDescription = "Описание задачи не должно превышать 250 символов"
+        ) else {
+            connection.prepareStatement(
+                """
                 INSERT INTO TodoItem(
                     id, description, priority, isCompleted, createdDate, dueDate, changedDate, userId
                 ) VALUES(
                     ?, ?, ?, ?, ?, ?, ?, ?
                 )
         """.trimIndent()
-        ).use { statement ->
-            statement.setString(1, todoItem.id)
-            statement.setString(2, todoItem.description)
-            statement.setInt(3, todoItem.priority.ordinal)
-            statement.setInt(4, if (todoItem.isCompleted) 1 else 0)
-            statement.setString(5, todoItem.createdDate.toString())
-            statement.setString(6, todoItem.dueDate?.toString())
-            statement.setString(7, todoItem.changedDate?.toString())
-            statement.setLong(8, userId)
-            statement.executeUpdate()
+            ).use { statement ->
+                statement.setString(1, todoItem.id)
+                statement.setString(2, todoItem.description)
+                statement.setInt(3, todoItem.priority.ordinal)
+                statement.setInt(4, if (todoItem.isCompleted) 1 else 0)
+                statement.setString(5, todoItem.createdDate.toString())
+                statement.setString(6, todoItem.dueDate?.toString())
+                statement.setString(7, todoItem.changedDate?.toString())
+                statement.setLong(8, userId)
+                statement.executeUpdate()
 
+            }
         }
     }
 
@@ -179,10 +185,32 @@ class Repository {
         }
     }
 
-    suspend fun register(login: String, password: String): String? = withContext(Dispatchers.IO) {
+    suspend fun register(login: String, password: String): String = withContext(Dispatchers.IO) {
         val salt = getRandomString(8)
         val passwordHash = sha256(password + salt)
         val accessToken = UUID.randomUUID().toString()
+
+        when {
+            login.length < 4 -> throw ServerException(
+                errorKey = "LOGIN_TOO_SHORT",
+                errorDescription = "Логин должен быть не короче 4 символов"
+            )
+
+            login.length > 30 -> throw ServerException(
+                errorKey = "LOGIN_TOO_LONG",
+                errorDescription = "Логин должен быть не длиннее 30 символов"
+            )
+
+            password.length < 8 -> throw ServerException(
+                errorKey = "PASSWORD_TOO_SHORT",
+                errorDescription = "Пароль должен быть не короче 8 символов"
+            )
+
+            password.length > 40 -> throw ServerException(
+                errorKey = "PASSWORD_TOO_LONG",
+                errorDescription = "Пароль должен быть не длиннее 40 символов"
+            )
+        }
 
         connection.prepareStatement(
             """
@@ -193,7 +221,10 @@ class Repository {
             val result = statement.executeQuery()
             result.next()
             if (result.getInt(1) > 0) {
-                null
+                throw ServerException(
+                    errorKey = "USER_EXISTS",
+                    errorDescription = "Пользователь с таким логином уже существует"
+                )
             } else {
                 connection.prepareStatement(
                     """
@@ -212,7 +243,7 @@ class Repository {
         }
     }
 
-    suspend fun authorization(login: String, password: String): String? =
+    suspend fun authorization(login: String, password: String): String =
         withContext(Dispatchers.IO) {
             val newToken = UUID.randomUUID().toString()
             connection.prepareStatement(
@@ -222,7 +253,12 @@ class Repository {
             ).use { statement ->
                 statement.setString(1, login)
                 val result = statement.executeQuery()
-                if (result.next().not()) return@use null
+                if (result.next().not()) {
+                    throw ServerException(
+                        errorKey = "LOGIN_NOT_FOUND",
+                        errorDescription = "Пользователь с таким логином не найден"
+                    )
+                }
                 val dbSalt = result.getString("salt")
                 val dbPasswordHash = result.getString("passwordHash")
                 val saltedIncomePassword = sha256(password + dbSalt)
@@ -239,7 +275,12 @@ class Repository {
                         statementUpdate.executeUpdate()
                         newToken
                     }
-                } else null
+                } else {
+                    throw ServerException(
+                        errorKey = "WRONG_PASSWORD",
+                        errorDescription = "Неверный пароль"
+                    )
+                }
             }
         }
 

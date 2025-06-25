@@ -49,16 +49,16 @@ class MainActivity : AppCompatActivity() {
                             val itemList = backStackEntry.toRoute<TaskDestination>().itemList
                             val item = if (itemList != null) {
                                 TodoItem(
-                                    itemList[0]!!,
-                                    itemList[1]!!,
-                                    TodoItem.Priority.entries[itemList[2]!!.toInt()],
-                                    itemList[3]!!.toInt() != 0,
-                                    itemList[4].let { LocalDate.parse(it) },
-                                    itemList[5]?.let { LocalDate.parse(it) },
-                                    itemList[6]?.let { LocalDate.parse(it) }
+                                    id = itemList[0]!!,
+                                    description = itemList[1]!!,
+                                    priority = TodoItem.Priority.entries[itemList[2]!!.toInt()],
+                                    isCompleted = itemList[3]!!.toInt() != 0,
+                                    createdDate = itemList[4].let { LocalDate.parse(it) },
+                                    dueDate = itemList[5]?.let { LocalDate.parse(it) },
+                                    changedDate = itemList[6]?.let { LocalDate.parse(it) }
                                 )
                             } else null
-                            TaskScreen(navController, item)
+                            TaskScreen(navController = navController, item = item)
                         }
                         screen.Content()
                     }

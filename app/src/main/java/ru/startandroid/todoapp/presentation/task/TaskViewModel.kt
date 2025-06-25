@@ -1,19 +1,18 @@
 package ru.startandroid.todoapp.presentation.task
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import okio.IOException
 import org.joda.time.LocalDate
 import org.kodein.di.DIAware
 import org.kodein.di.android.x.closestDI
 import org.kodein.di.instance
-import ru.startandroid.todoapp.data.ServerException
 import ru.startandroid.todoapp.data.TodoItemsRepository
+import ru.startandroid.todoapp.data.api.ServerException
+import ru.startandroid.todoapp.models.Error
 import ru.startandroid.todoapp.models.TodoItem
 import java.util.UUID
 
@@ -39,16 +38,23 @@ class TaskViewModel(application: Application) : AndroidViewModel(application), D
 
     val priority: MutableLiveData<TodoItem.Priority> = MutableLiveData(TodoItem.Priority.NONE)
 
-
     private val operationPrivate = MutableLiveData<Operation?>(null)
     val operation: LiveData<Operation?> get() = operationPrivate
 
     private val donePrivate = MutableLiveData(false)
     val done: LiveData<Boolean> get() = donePrivate
 
+    private val errorsPrivate = MutableLiveData<List<Error>>(emptyList())
+    val errors: LiveData<List<Error>> get() = errorsPrivate
 
     enum class Operation {
         LOADING
+    }
+
+    fun closeServerError() {
+        errorsPrivate.value = errorsPrivate.value!!
+            .filterNot { it is Error.ServerError }
+            .filterNot { it is Error.UnknownError }
     }
 
     fun remove(): String {
@@ -58,10 +64,15 @@ class TaskViewModel(application: Application) : AndroidViewModel(application), D
         viewModelScope.launch {
             try {
                 repository.removeItem(existingItem.id)
-            } catch (exception: IOException) {
-                Log.d("server response", "some problem with server in removeItem")
+            } catch (exception: ServerException) {
+                errorsPrivate.value = exception.errorDescription?.let {
+                    errorsPrivate.value!! + Error.ServerError(it)
+                } ?: (errorsPrivate.value!! + Error.UnknownError)
+            } catch (exception: Exception) {
+                errorsPrivate.value = errorsPrivate.value!! + Error.UnknownError
+            } finally {
+                operationPrivate.value = null
             }
-            operationPrivate.value = null
             donePrivate.value = true
         }
         return existingItem.id
@@ -88,19 +99,16 @@ class TaskViewModel(application: Application) : AndroidViewModel(application), D
                 repository.addItem(todoItem)
                 donePrivate.value = true
             } catch (exception: ServerException) {
-                exception.errorDescription
-            } catch (exception: IOException) {
-                Log.d("server response", "some problem with server in addItem")
+                errorsPrivate.value = exception.errorKey?.let {
+                    errorsPrivate.value!! + Error.ServerError(it)
+                } ?: (errorsPrivate.value!! + Error.UnknownError)
+            } catch (exception: Exception) {
+                errorsPrivate.value = errorsPrivate.value!! + Error.UnknownError
+            } finally {
+                operationPrivate.value = null
             }
-            operationPrivate.value = null
         }
         return todoItem
     }
 
 }
-
-
-//{
-//    "error_key": "login_not_found",
-//    "error_description": "Пользователь с таким логином не найден"
-//}

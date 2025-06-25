@@ -80,7 +80,7 @@ fun ItemCard(
                 }
 
                 CompositionLocalProvider(
-                    LocalContentColor provides if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(
+                    value = LocalContentColor provides if (item.isCompleted) MaterialTheme.colorScheme.onSurface.copy(
                         alpha = 0.38f
                     ) else MaterialTheme.colorScheme.onSurface
                 ) {
@@ -107,8 +107,8 @@ fun ItemCard(
                 onClick = { openAlertDialog = true }
             ) {
                 Icon(
-                    Icons.Default.Clear,
-                    stringResource(id = R.string.close_button),
+                    imageVector = Icons.Default.Clear,
+                    contentDescription = stringResource(id = R.string.close_button),
                     tint = MaterialTheme.colorScheme.error
                 )
             }
@@ -159,21 +159,21 @@ fun DeleteAlertDialog(
 @Composable
 fun ListCardPreview() {
     val item = TodoItem(
-        "11112",
-        "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
-        TodoItem.Priority.LOW,
-        true,
-        LocalDate.now(),
-        LocalDate(1996, 4, 4),
-        null
+        id = "11112",
+        description = "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
+        priority = TodoItem.Priority.LOW,
+        isCompleted = true,
+        createdDate = LocalDate.now(),
+        dueDate = LocalDate(1996, 4, 4),
+        changedDate = null
     )
     MyTheme {
         ItemCard(
-            item,
-            {},
-            {},
-            {},
-            3,
+            item = item,
+            onCheckedChange = {},
+            onRemove = {},
+            onClick = {},
+            index = 3,
         )
     }
 }
@@ -182,21 +182,21 @@ fun ListCardPreview() {
 @Composable
 fun ListCardPreviewPriorityHigh() {
     val item = TodoItem(
-        "11113",
-        "Jetpack Compose",
-        TodoItem.Priority.HIGH,
-        false,
-        LocalDate.now(),
-        null,
-        null
+        id = "11113",
+        description = "Jetpack Compose",
+        priority = TodoItem.Priority.HIGH,
+        isCompleted = false,
+        createdDate = LocalDate.now(),
+        dueDate = null,
+        changedDate = null
     )
     MyTheme {
         ItemCard(
-            item,
-            {},
-            {},
-            {},
-            2
+            item = item,
+            onCheckedChange = {},
+            onRemove = {},
+            onClick = {},
+            index = 2
         )
     }
 }
@@ -205,21 +205,21 @@ fun ListCardPreviewPriorityHigh() {
 @Composable
 fun ListCardPreviewPriorityHigh1sdgdsfg() {
     val item = TodoItem(
-        "11112",
-        "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
-        TodoItem.Priority.HIGH,
-        false,
-        LocalDate.now(),
-        LocalDate(1996, 4, 4),
-        null
+        id = "11112",
+        description = "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
+        priority = TodoItem.Priority.HIGH,
+        isCompleted = false,
+        createdDate = LocalDate.now(),
+        dueDate = LocalDate(1996, 4, 4),
+        changedDate = null
     )
     MyTheme {
         ItemCard(
-            item,
-            {},
-            {},
-            {},
-            4
+            item = item,
+            onCheckedChange = {},
+            onRemove = {},
+            onClick = {},
+            index = 4
         )
     }
 }
@@ -228,21 +228,21 @@ fun ListCardPreviewPriorityHigh1sdgdsfg() {
 @Composable
 fun ListCardPreviewPriorityHigh1sdgds() {
     val item = TodoItem(
-        "11112",
-        "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
-        TodoItem.Priority.HIGH,
-        false,
-        LocalDate.now(),
-        LocalDate(1996, 4, 4),
-        null
+        id = "11112",
+        description = "Jetpack Compose is a modern toolkit for building native Android UI. Jetpack Compose simplifies and accelerates UI development on Android with less code, powerful tools, and intuitive Kotlin APIs.",
+        priority = TodoItem.Priority.HIGH,
+        isCompleted = false,
+        createdDate = LocalDate.now(),
+        dueDate = LocalDate(1996, 4, 4),
+        changedDate = null
     )
     MyTheme {
         ItemCard(
-            item,
-            {},
-            {},
-            {},
-            4
+            item = item,
+            onCheckedChange = {},
+            onRemove = {},
+            onClick = {},
+            index = 4
         )
     }
 }
@@ -251,21 +251,21 @@ fun ListCardPreviewPriorityHigh1sdgds() {
 @Composable
 fun ListCardPreviewNight() {
     val item = TodoItem(
-        "11111",
-        "1111111",
-        TodoItem.Priority.LOW,
-        true,
-        LocalDate.now(),
-        null,
-        null
+        id = "11111",
+        description = "1111111",
+        priority = TodoItem.Priority.LOW,
+        isCompleted = true,
+        createdDate = LocalDate.now(),
+        dueDate = null,
+        changedDate = null
     )
     MyTheme {
         ItemCard(
-            item,
-            {},
-            {},
-            {},
-            5
+            item = item,
+            onCheckedChange = {},
+            onRemove = {},
+            onClick = {},
+            index = 5
         )
     }
 }

@@ -1,4 +1,4 @@
-package ru.startandroid.todoapp.data
+package ru.startandroid.todoapp.data.api
 
 import retrofit2.http.Body
 import retrofit2.http.GET
