@@ -51,16 +51,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation.NavController
 import ru.startandroid.todoapp.R
-import ru.startandroid.todoapp.presentation.main.MainScreen
+import ru.startandroid.todoapp.presentation.main.LoginDestination
+import ru.startandroid.todoapp.presentation.main.MainDestination
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
-class RegistrationScreen : Screen {
+class RegistrationScreen(private val navController: NavController) {
     @Composable
-    override fun Content() {
+    fun Content() {
         val viewModel = viewModel<RegistrationViewModel>()
         val loginState by viewModel.login.observeAsState("")
         val passwordFirstState by viewModel.passwordFirst.observeAsState("")
@@ -69,10 +68,11 @@ class RegistrationScreen : Screen {
         val done by viewModel.done.observeAsState(false)
         val operation by viewModel.operation.observeAsState()
         val errors by viewModel.errors.observeAsState()
-        val navigator = LocalNavigator.currentOrThrow
 
         RegistrationPresentation(
-            { navigator.pop() },
+            {
+                navController.popBackStack()
+            },
             loginState,
             { login -> viewModel.setLogin(login) },
             passwordFirstState,
@@ -84,7 +84,9 @@ class RegistrationScreen : Screen {
         )
 
         if (done) {
-            navigator.replace(MainScreen())
+            navController.navigate(MainDestination) {
+                popUpTo<LoginDestination> { inclusive = true }
+            }
         }
         if (operation == RegistrationViewModel.Operation.LOADING) {
             Box(
@@ -145,7 +147,6 @@ class RegistrationScreen : Screen {
                                 .defaultMinSize(minHeight = 1.dp)
                                 .padding(horizontal = 5.dp),
                             contentPadding = PaddingValues(3.dp)
-
                         ) {
                             Text(
                                 text = buildAnnotatedString {
@@ -205,8 +206,7 @@ class RegistrationScreen : Screen {
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary
                         ),
-
-                        )
+                    )
 
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -366,7 +366,7 @@ class RegistrationScreen : Screen {
         )
     }
 
-
+    @Suppress("ComposePreviewMustBeTopLevelFunction")
     @Preview
     @Composable
     fun RegistrationPresentationPreview() {

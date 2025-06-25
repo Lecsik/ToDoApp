@@ -53,6 +53,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -60,10 +61,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation.NavController
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 import org.joda.time.DateTimeZone
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
@@ -71,12 +71,12 @@ import ru.startandroid.todoapp.models.TodoItem
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
 @Parcelize
-class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
+class TaskScreen(private val navController: @RawValue NavController, private val item: TodoItem?) :
+    Parcelable {
 
     @Composable
-    override fun Content() {
+    fun Content() {
         val viewModel = viewModel<TaskViewModel>()
-        val navigator = LocalNavigator.currentOrThrow
         LaunchedEffect(Unit) {
             item?.let { viewModel.setExistingItem(it) }
         }
@@ -88,7 +88,9 @@ class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
         val operation by viewModel.operation.observeAsState()
 
         TaskScreenPresentation(
-            onBackClick = { navigator.pop() },
+            onBackClick = {
+                navController.popBackStack()
+            },
             isItemExists = isItemExists,
             onDeleteClick = {
                 viewModel.remove()
@@ -109,7 +111,7 @@ class TaskScreen(private val item: TodoItem?) : Screen, Parcelable {
         )
 
         if (done) {
-            navigator.pop()
+            navController.popBackStack()
         }
         if (operation == TaskViewModel.Operation.LOADING) {
             Box(
@@ -138,7 +140,7 @@ fun TaskScreenPresentation(
     onPriorityChange: (TodoItem.Priority) -> Unit,
     onSave: () -> Unit
 ) {
-    val scrollState = rememberScrollState()
+    val topAppBarScrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     var mDisplayMenu by remember { mutableStateOf(false) }
     Scaffold(
         topBar = {
@@ -195,6 +197,7 @@ fun TaskScreenPresentation(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.secondary,
                 ),
+                scrollBehavior = topAppBarScrollBehavior
             )
         },
         modifier = Modifier.imePadding()
@@ -206,8 +209,10 @@ fun TaskScreenPresentation(
         }
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+                .fillMaxWidth()
+                .padding(innerPadding)
+                .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Spacer(modifier = Modifier.height(20.dp))
@@ -215,8 +220,7 @@ fun TaskScreenPresentation(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .wrapContentHeight()
-                    .fillMaxWidth()
-                    .verticalScroll(scrollState),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(2.dp, colorPriority),
             ) {

@@ -51,29 +51,33 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation.NavController
 import ru.startandroid.todoapp.R
-import ru.startandroid.todoapp.presentation.main.MainScreen
-import ru.startandroid.todoapp.presentation.registration.RegistrationScreen
+import ru.startandroid.todoapp.presentation.main.LoginDestination
+import ru.startandroid.todoapp.presentation.main.MainDestination
+import ru.startandroid.todoapp.presentation.main.RegistrationDestination
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
-class LoginScreen : Screen {
+class LoginScreen(private val navController: NavController) {
     @Composable
-    override fun Content() {
+    fun Content() {
         val viewModel = viewModel<LoginViewModel>()
         val loginState by viewModel.login.observeAsState("")
         val passwordState by viewModel.password.observeAsState("")
         val done by viewModel.done.observeAsState(false)
         val operation by viewModel.operation.observeAsState()
         val errors by viewModel.errors.observeAsState()
-        val navigator = LocalNavigator.currentOrThrow
 
-        if (viewModel.checkAuth()) navigator.replace(MainScreen())
+        if (viewModel.checkAuth()) {
+            navController.navigate(MainDestination) {
+                popUpTo<LoginDestination> { inclusive = true }
+            }
+        }
 
         LoginPresentation(
-            { navigator.push(RegistrationScreen()) },
+            {
+                navController.navigate(RegistrationDestination)
+            },
             loginState,
             { login -> viewModel.setLogin(login) },
             passwordState,
@@ -83,7 +87,9 @@ class LoginScreen : Screen {
         )
 
         if (done) {
-            navigator.replace(MainScreen())
+            navController.navigate(MainDestination) {
+                popUpTo<LoginDestination> { inclusive = true }
+            }
         }
         if (operation == LoginViewModel.Operation.LOADING) {
             Box(
@@ -267,6 +273,7 @@ class LoginScreen : Screen {
     }
 
 
+    @Suppress("ComposePreviewMustBeTopLevelFunction")
     @Preview
     @Composable
     fun LoginPresentationPreview(

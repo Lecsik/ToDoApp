@@ -53,21 +53,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.navigation.NavController
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
 import org.joda.time.LocalDate
 import ru.startandroid.todoapp.R
 import ru.startandroid.todoapp.models.TodoItem
-import ru.startandroid.todoapp.presentation.login.LoginScreen
-import ru.startandroid.todoapp.presentation.task.TaskScreen
 import ru.startandroid.todoapp.ui.theme.MyTheme
 
 @Parcelize
-class MainScreen : Screen, Parcelable {
+class MainScreen(private val navController: @RawValue NavController) : Parcelable {
+
     @Composable
-    override fun Content() {
+    fun Content() {
         val viewModel = viewModel<MainViewModel>()
         val isCompletedTasksVisible by viewModel.isCompletedTasksVisible.observeAsState(false)
         val switchCompletedTasksVisibility = { viewModel.switchCompletedTasksVisibility() }
@@ -79,11 +77,11 @@ class MainScreen : Screen, Parcelable {
         val onSetCompleted =
             { position: Int, isCompleted: Boolean -> viewModel.setCompleted(position, isCompleted) }
         val operation by viewModel.operation.observeAsState()
-        val navigator = LocalNavigator.currentOrThrow
-
         val exit = {
             viewModel.exit()
-            navigator.replace(LoginScreen())
+            navController.navigate(LoginDestination) {
+                popUpTo<MainDestination> { inclusive = true }
+            }
         }
 
         LaunchedEffect(Unit) {
@@ -100,8 +98,22 @@ class MainScreen : Screen, Parcelable {
             onPullRefresh = onPullRefresh,
             onRemoveClick = onRemoveClick,
             onSetCompleted = onSetCompleted,
-            onItemAddClick = { navigator.push(TaskScreen(null)) },
-            onItemClick = { navigator.push(TaskScreen(it)) }
+            onItemAddClick = { navController.navigate(TaskDestination(null)) },
+            onItemClick = {
+                navController.navigate(
+                    TaskDestination(
+                        listOf(
+                            it.id,
+                            it.description,
+                            it.priority.ordinal.toString(),
+                            if (it.isCompleted) "1" else "0",
+                            it.createdDate.toString(),
+                            it.dueDate?.toString(),
+                            it.changedDate?.toString()
+                        )
+                    )
+                )
+            }
         )
         if (operation == MainViewModel.Operation.LOADING) {
             Box(

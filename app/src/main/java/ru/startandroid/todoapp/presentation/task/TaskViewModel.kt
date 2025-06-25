@@ -12,6 +12,7 @@ import org.joda.time.LocalDate
 import org.kodein.di.DIAware
 import org.kodein.di.android.x.closestDI
 import org.kodein.di.instance
+import ru.startandroid.todoapp.data.ServerException
 import ru.startandroid.todoapp.data.TodoItemsRepository
 import ru.startandroid.todoapp.models.TodoItem
 import java.util.UUID
@@ -85,13 +86,21 @@ class TaskViewModel(application: Application) : AndroidViewModel(application), D
         viewModelScope.launch {
             try {
                 repository.addItem(todoItem)
+                donePrivate.value = true
+            } catch (exception: ServerException) {
+                exception.errorDescription
             } catch (exception: IOException) {
                 Log.d("server response", "some problem with server in addItem")
             }
             operationPrivate.value = null
-            donePrivate.value = true
         }
         return todoItem
     }
 
 }
+
+
+//{
+//    "error_key": "login_not_found",
+//    "error_description": "Пользователь с таким логином не найден"
+//}

@@ -14,7 +14,8 @@ fun main() {
         install(Authentication) {
             bearer {
                 authenticate { tokenCredential ->
-                    val userId = Repository().findUser(tokenCredential.token) ?: run { null }
+                    val userId =
+                        Repository().findUser(tokenCredential.token) ?: return@authenticate null
                     UserIdPrincipal(userId.toString())
                 }
             }
