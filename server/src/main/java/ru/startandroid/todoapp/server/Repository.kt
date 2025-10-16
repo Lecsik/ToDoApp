@@ -13,7 +13,7 @@ import java.util.UUID
 class Repository {
 
     private val connection =
-        DriverManager.getConnection("jdbc:sqlite:server/build/database.db")
+        DriverManager.getConnection("jdbc:sqlite:database.db")
 
     init {
         val statement: Statement = connection.createStatement()

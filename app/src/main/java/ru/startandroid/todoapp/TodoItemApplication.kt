@@ -29,7 +29,7 @@ class TodoItemApplication : Application(), DIAware {
                     OkHttpClient.Builder()
                         .addInterceptor(AuthInterceptor(instance()))
                         .addInterceptor(HttpLoggingInterceptor())
-                        .addInterceptor(ErrorsInterceptor())
+                        .addInterceptor(ErrorsInterceptor(instance()))
                         .build()
                 )
                 .build()
