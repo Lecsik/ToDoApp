@@ -3,7 +3,9 @@ package ru.startandroid.todoapp.presentation.main
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,6 +17,11 @@ import ru.startandroid.todoapp.presentation.login.LoginScreen
 import ru.startandroid.todoapp.presentation.registration.RegistrationScreen
 import ru.startandroid.todoapp.presentation.task.TaskScreen
 import ru.startandroid.todoapp.ui.theme.MyTheme
+import java.lang.ref.WeakReference
+
+object NavControllerHolder {
+    lateinit var navController: WeakReference<NavController>
+}
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,11 +29,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyTheme {
-                val isAuthenticated = remember { false }
-                val startDestination: Any =
-                    if (isAuthenticated) MainDestination else LoginDestination
                 val navController = rememberNavController()
-                NavHost(navController = navController, startDestination = startDestination) {
+                SideEffect {
+                    NavControllerHolder.navController = WeakReference(navController)
+                }
+                NavHost(navController = navController, startDestination = LoginDestination) {
                     composable<LoginDestination> {
                         val screen = remember { LoginScreen(navController) }
                         screen.Content()
